@@ -1,0 +1,11 @@
+node_modules/
+target/
+.DS_Store
+.env
+dist/
+build/
+*.mv.db
+*.trace.db
+artifacts/
+dummy.txt
+backend/src/main/resources/application.yml
