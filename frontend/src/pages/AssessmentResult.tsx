@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
-import { ArrowLeft, CheckCircle, XCircle, AlertCircle, BookOpen } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MCQQuestion {

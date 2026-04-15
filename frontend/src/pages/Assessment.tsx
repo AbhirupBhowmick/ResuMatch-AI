@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, ChevronLeft, ChevronRight, Check } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 interface MCQQuestion {

@@ -11,6 +11,7 @@ interface CoverLetterData {
 
 const CoverLetter = () => {
   const [jobDescription, setJobDescription] = useState("");
+  const [resumeProfile, setResumeProfile] = useState("Senior Full Stack Engineer (Default)");
   const [isLoading, setIsLoading] = useState(false);
   const [coverLetterData, setCoverLetterData] = useState<CoverLetterData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -19,8 +20,8 @@ const CoverLetter = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
-  const userName = localStorage.getItem("user_name") || "Candidate";
-  const userEmail = localStorage.getItem("user_email") || "candidate@example.com";
+  const userName = localStorage.getItem("user_name") || "Alex Rivera";
+  const userEmail = localStorage.getItem("user_email") || "alex.rivera@example.com";
 
   /* ── Animated loading messages ── */
   const loadingMessages = [
@@ -81,7 +82,8 @@ const CoverLetter = () => {
         { jobDescription },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setCoverLetterData(response.data);
+      // Ensure we hit the right object shape whether it returns data or data.data
+      setCoverLetterData(response.data.data || response.data);
     } catch (err: any) {
       const msg =
         err.response?.data?.message ||
@@ -138,13 +140,13 @@ const CoverLetter = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "CoverLetter.pdf";
+      a.download = "My_Cover_Letter.pdf";
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err: any) {
-      console.error("PDF download failed:", err);
+      console.error("PDF generation error:", err);
       setError("Failed to download PDF. Please try again.");
     } finally {
       setIsDownloading(false);
@@ -158,41 +160,59 @@ const CoverLetter = () => {
   });
 
   return (
-    <div className="bg-[#070d1f] text-[#dfe4fe] min-h-screen font-body selection:bg-primary/30">
+    <div className="bg-surface text-on-surface overflow-hidden min-h-screen font-body selection:bg-primary-container/30">
       <Sidebar />
       <Header title="Cover Letter Generator" />
 
-      <main className="lg:ml-64 pt-16 h-[calc(100vh)] flex flex-col lg:flex-row">
+      <main className="ml-0 md:ml-64 pt-24 h-screen flex flex-col md:flex-row bg-surface">
         {/* ═══════════ Left Panel: Input ═══════════ */}
-        <section className="w-full lg:w-1/2 p-8 border-r border-[#ffffff]/5 flex flex-col gap-8 overflow-y-auto no-scrollbar">
+        <section className="w-full md:w-1/2 p-8 border-r border-outline-variant/10 flex flex-col gap-8 overflow-y-auto no-scrollbar pb-32">
           <div className="flex flex-col gap-2">
-            <h2 className="text-3xl font-black font-headline tracking-tight text-[#dfe4fe]">
+            <h2 className="text-3xl font-black font-headline tracking-tight text-on-surface">
               Cover Letter Generator
             </h2>
-            <p className="text-[#a5aac2] leading-relaxed">
+            <p className="text-on-surface-variant leading-relaxed">
               Let AI craft a high-impact, tailored narrative for your next big role.
             </p>
           </div>
 
           {/* Input Card */}
-          <div className="bg-[#11192e]/60 backdrop-blur-xl p-8 rounded-xl border-t border-[#ffffff]/10 flex flex-col gap-6">
+          <div className="bg-surface-container-low/60 backdrop-blur-[12px] p-8 rounded-xl border-t border-outline-variant/20 flex flex-col gap-6">
             <div className="flex flex-col gap-3">
               <label className="font-headline font-semibold text-sm text-primary tracking-wider uppercase">
-                Job Description
+                JOB DESCRIPTION
               </label>
               <textarea
-                className="w-full h-64 bg-black/30 border border-[#ffffff]/10 rounded-xl p-4 text-[#dfe4fe] text-sm focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all resize-none placeholder:text-[#6f758b] outline-none"
+                className="w-full h-64 bg-surface-container-lowest border border-outline-variant/15 rounded-xl p-4 text-on-surface text-sm focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all resize-none placeholder:text-outline outline-none"
                 placeholder="Paste the full job description here..."
                 value={jobDescription}
                 onChange={(e) => { setJobDescription(e.target.value); setError(null); }}
               />
             </div>
+            
+            <div className="flex flex-col gap-3">
+              <label className="font-headline font-semibold text-sm text-primary tracking-wider uppercase">
+                SELECT RESUME PROFILE
+              </label>
+              <div className="relative group">
+                <select 
+                  className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 text-on-surface text-sm focus:border-primary/50 focus:ring-0 appearance-none cursor-pointer"
+                  value={resumeProfile}
+                  onChange={(e) => setResumeProfile(e.target.value)}
+                >
+                  <option>Senior Full Stack Engineer (Default)</option>
+                  <option>Product Manager - Tech Core</option>
+                  <option>UI/UX Designer Profile</option>
+                </select>
+                <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline pointer-events-none group-hover:text-primary transition-colors">expand_more</span>
+              </div>
+            </div>
 
             {/* Error */}
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-start gap-3 animate-[fadeIn_0.3s_ease-out]">
-                <span className="material-symbols-outlined text-red-400 text-sm mt-0.5">error</span>
-                <p className="text-red-400 text-sm font-medium">{error}</p>
+              <div className="bg-error-container/10 border border-error-container/20 rounded-xl p-4 flex items-start gap-3">
+                <span className="material-symbols-outlined text-error text-sm mt-0.5">error</span>
+                <p className="text-error text-sm font-medium">{error}</p>
               </div>
             )}
 
@@ -200,13 +220,7 @@ const CoverLetter = () => {
             <button
               onClick={handleGenerate}
               disabled={isLoading}
-              className={`w-full py-4 rounded-xl font-bold font-headline text-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/10 cursor-pointer
-                ${isLoading
-                  ? "bg-primary-container/70 text-[#14007e] cursor-wait"
-                  : !jobDescription.trim()
-                    ? "bg-[#171f36] text-[#6f758b] cursor-not-allowed"
-                    : "bg-primary-container text-[#14007e] hover:brightness-110 active:scale-95"
-                }`}
+              className="w-full py-4 bg-primary-container text-on-primary-container disabled:opacity-70 disabled:cursor-not-allowed rounded-xl font-bold font-headline text-lg flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/10"
             >
               {isLoading ? (
                 <>
@@ -224,8 +238,8 @@ const CoverLetter = () => {
 
           {/* Pro Lock State */}
           {!isProUser && (
-            <div className="relative group overflow-hidden rounded-xl h-48 border border-[#ffffff]/10 bg-[#0c1326]/50">
-              <div className="absolute inset-0 backdrop-blur-[2px] bg-[#070d1f]/60 flex flex-col items-center justify-center gap-3 z-10">
+            <div className="relative group overflow-hidden rounded-xl h-48 border border-outline-variant/15 bg-surface-container-low/50">
+              <div className="absolute inset-0 backdrop-blur-[2px] bg-slate-950/40 flex flex-col items-center justify-center gap-3 z-10">
                 <span
                   className="material-symbols-outlined text-4xl text-primary"
                   style={{ fontVariationSettings: "'FILL' 1" }}
@@ -233,8 +247,8 @@ const CoverLetter = () => {
                   lock
                 </span>
                 <div className="text-center">
-                  <p className="font-headline font-bold text-[#dfe4fe]">Pro Customizations</p>
-                  <p className="text-xs text-[#a5aac2]">Unlock custom tones, character limits, and more.</p>
+                  <p className="font-headline font-bold text-on-surface">Pro Customizations</p>
+                  <p className="text-xs text-on-surface-variant">Unlock custom tones, character limits, and more.</p>
                 </div>
                 <button
                   onClick={() => navigate("/pricing")}
@@ -244,24 +258,25 @@ const CoverLetter = () => {
                 </button>
               </div>
               <div className="p-6 opacity-30 grayscale blur-sm flex flex-col gap-4">
-                <div className="h-2 w-3/4 bg-[#41475b] rounded"></div>
-                <div className="h-2 w-1/2 bg-[#41475b] rounded"></div>
-                <div className="h-2 w-2/3 bg-[#41475b] rounded"></div>
-                <div className="h-2 w-full bg-[#41475b] rounded"></div>
+                <div className="h-2 w-3/4 bg-outline-variant rounded"></div>
+                <div className="h-2 w-1/2 bg-outline-variant rounded"></div>
+                <div className="h-2 w-2/3 bg-outline-variant rounded"></div>
+                <div className="h-2 w-full bg-outline-variant rounded"></div>
               </div>
             </div>
           )}
         </section>
 
         {/* ═══════════ Right Panel: A4 Paper Preview ═══════════ */}
-        <section className="w-full lg:w-1/2 bg-[#0c1326] p-8 flex items-start justify-center overflow-y-auto no-scrollbar relative">
-          <div className="relative w-full flex flex-col items-center pt-12">
+        <section className="w-full md:w-1/2 bg-surface-container-low p-8 flex items-start justify-center overflow-y-auto no-scrollbar relative pb-32">
+          <div className="relative w-full flex flex-col items-center pt-8">
+            
             {/* Preview Toolbar */}
             {coverLetterData && (
-              <div className="absolute top-0 right-0 flex gap-2 animate-[fadeIn_0.5s_ease-out]">
+              <div className="absolute -top-4 right-0 flex gap-2 animate-[fadeIn_0.5s_ease-out] z-30">
                 <button
                   onClick={handleCopy}
-                  className="flex items-center gap-2 bg-[#171f36] hover:bg-[#222b47] px-4 py-2 rounded-lg text-sm font-headline font-medium text-[#dfe4fe] transition-colors cursor-pointer"
+                  className="flex items-center gap-2 bg-surface-container-high hover:bg-surface-bright px-4 py-2 rounded-lg text-sm font-headline font-medium text-on-surface transition-colors cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[18px]">
                     {copied ? "check" : "content_copy"}
@@ -271,7 +286,7 @@ const CoverLetter = () => {
                 <button
                   onClick={handleDownloadPdf}
                   disabled={isDownloading}
-                  className="flex items-center gap-2 bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-headline font-bold transition-colors hover:bg-indigo-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 bg-primary-fixed text-on-primary-fixed px-4 py-2 rounded-lg text-sm font-headline font-bold transition-colors hover:brightness-110 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className={`material-symbols-outlined text-[18px] ${isDownloading ? 'animate-spin' : ''}`}>
                     {isDownloading ? "refresh" : "download"}
@@ -283,12 +298,28 @@ const CoverLetter = () => {
 
             {/* ── A4 Paper ── */}
             <div
-              className="w-full max-w-[680px] bg-white rounded-xl shadow-2xl shadow-black/40 p-12 text-slate-900 flex flex-col gap-6 selection:bg-indigo-100 overflow-hidden relative"
+              className="w-full max-w-[680px] bg-white rounded-xl shadow-2xl shadow-black/40 p-12 text-slate-900 flex flex-col gap-6 selection:bg-primary-container/40 overflow-hidden relative"
               style={{ aspectRatio: "1 / 1.414", minHeight: "700px" }}
             >
+              {/* Internal Toolbar (Shows if cover letter active, alternative position)  */}
+              {coverLetterData && (
+                <div className="absolute top-6 right-6 z-30">
+                    <button
+                        onClick={handleDownloadPdf}
+                        disabled={isDownloading}
+                        className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-headline font-semibold text-slate-700 hover:bg-slate-100 transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                    <span className={`material-symbols-outlined text-[18px] ${isDownloading ? 'animate-spin' : ''}`}>
+                        {isDownloading ? "refresh" : "download"}
+                    </span>
+                    {isDownloading ? "Downloading..." : "Download PDF"}
+                    </button>
+                </div>
+              )}
+
               {/* ── Loading Skeleton ── */}
               {isLoading && (
-                <div className="absolute inset-0 z-20 bg-white p-12 flex flex-col gap-6 animate-pulse">
+                <div className="absolute inset-0 z-20 bg-white p-12 flex flex-col gap-6 animate-[fadeIn_0.5s_ease-out]">
                   <div className="border-b border-slate-100 pb-8 flex flex-col gap-4">
                     <div className="h-8 w-1/3 bg-slate-100 rounded"></div>
                     <div className="h-4 w-1/2 bg-slate-100 rounded"></div>
@@ -299,10 +330,10 @@ const CoverLetter = () => {
                   </div>
                   <div className="mt-8 flex flex-col gap-6">
                     <div className="flex items-center gap-3">
-                      <span className="material-symbols-outlined text-indigo-400 animate-[spin_2s_linear_infinite]">
+                      <span className="material-symbols-outlined text-primary animate-[spin_2s_linear_infinite]">
                         auto_awesome
                       </span>
-                      <p className="text-sm font-headline font-bold text-indigo-400 transition-opacity">
+                      <p className="text-sm font-headline font-bold text-primary transition-opacity">
                         {loadingMessages[loadingMsgIdx]}
                       </p>
                     </div>
@@ -317,17 +348,18 @@ const CoverLetter = () => {
 
               {/* ── Generated Content ── */}
               {coverLetterData && !isLoading ? (
-                <>
-                  {/* Header */}
-                  <div className="border-b border-slate-100 pb-8 animate-[fadeIn_0.6s_ease-out]">
+                <div className="flex flex-col gap-6">
+                  {/* Header Info */}
+                  <div className="border-b border-slate-100 pb-8 hover:bg-slate-50/50 transition-colors p-2 -mx-2 rounded">
                     <h3 className="text-2xl font-bold text-slate-900 font-headline">{userName}</h3>
-                    <p className="text-sm text-slate-500 mt-1">{userEmail}</p>
+                    <p className="text-sm text-slate-500 font-body mt-1">San Francisco, CA | {userEmail} | 555-0123</p>
                   </div>
-
-                  {/* Date & Recipient */}
-                  <div className="space-y-1 animate-[fadeIn_0.8s_ease-out]">
+                  
+                  {/* Recipient Info */}
+                  <div className="space-y-1">
                     <p className="text-sm font-medium">{today}</p>
                     <p className="text-sm font-bold">Hiring Manager</p>
+                    <p className="text-sm text-slate-600">Company Name</p>
                   </div>
 
                   {/* Body */}
@@ -342,7 +374,7 @@ const CoverLetter = () => {
                     {coverLetterData.body_paragraphs.map((para, i) => (
                       <p
                         key={i}
-                        className="text-sm leading-relaxed text-slate-700"
+                        className="text-sm leading-relaxed text-slate-700 hover:bg-slate-50 transition-colors"
                         style={{
                           animation: `fadeIn ${0.5 + i * 0.3}s ease-out both`,
                           animationDelay: `${1.2 + i * 0.15}s`,
@@ -364,38 +396,37 @@ const CoverLetter = () => {
                       <p className="text-sm font-bold mt-2">{userName}</p>
                     </div>
                   </div>
-                </>
+                </div>
               ) : !isLoading ? (
                 /* ── Empty State ── */
-                <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center">
-                  <span
-                    className="material-symbols-outlined text-6xl text-slate-200"
-                    style={{ fontVariationSettings: "'FILL' 1" }}
-                  >
-                    draft
-                  </span>
-                  <div>
-                    <p className="text-lg font-bold text-slate-400 font-headline">
-                      Your cover letter will appear here
-                    </p>
-                    <p className="text-sm text-slate-300 mt-1">
-                      Paste a job description and click "Generate" to create a tailored cover letter.
-                    </p>
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center animate-[fadeIn_0.5s_ease-out]">
+                  <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                    <span
+                      className="material-symbols-outlined text-slate-300 text-3xl"
+                    >
+                      description
+                    </span>
                   </div>
+                  <h4 className="font-headline font-bold text-slate-400 text-lg">
+                    No Content Yet
+                  </h4>
+                  <p className="text-slate-400 text-sm max-w-xs mt-2">
+                    Paste a job description and click "Generate" to create a tailored cover letter.
+                  </p>
                 </div>
               ) : null}
             </div>
 
             {/* Bottom Paper Stack */}
-            <div className="w-[98%] h-2 bg-white/20 rounded-b-xl -mt-1 mx-auto"></div>
-            <div className="w-[96%] h-2 bg-white/10 rounded-b-xl -mt-1 mx-auto"></div>
+            <div className="w-[98%] h-2 bg-white/20 rounded-b-xl -mt-1 mx-auto hidden md:block"></div>
+            <div className="w-[96%] h-2 bg-white/10 rounded-b-xl -mt-1 mx-auto hidden md:block"></div>
           </div>
         </section>
       </main>
 
       {/* Background Overlay */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-[-1]">
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary via-[#070d1f] to-[#9093ff]"></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-primary via-surface to-tertiary"></div>
       </div>
 
       {/* Inline keyframes */}
@@ -403,6 +434,10 @@ const CoverLetter = () => {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

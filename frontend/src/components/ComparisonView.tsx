@@ -19,7 +19,7 @@ export default function ComparisonView({ isOpen, onClose, onConfirm, comparisons
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 font-body"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -40,113 +40,103 @@ export default function ComparisonView({ isOpen, onClose, onConfirm, comparisons
 
           {/* Modal */}
           <motion.div
-            className="relative w-full max-w-5xl bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-slate-800 shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden max-h-[90vh] flex flex-col"
+            className="relative w-full max-w-5xl bg-slate-900/50 backdrop-blur-xl rounded-xl border border-slate-800 shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden max-h-[90vh] flex flex-col"
             initial={{ scale: 0.9, y: 50, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.9, y: 50, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
           >
-            {/* Glass Edge */}
-            <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[#41475b]/30 to-transparent"></div>
-
-            {/* Dismiss Button */}
-            <button
-              className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors cursor-pointer"
-              onClick={onClose}
-            >
-              <span className="material-symbols-outlined text-[#a5aac2] text-sm">close</span>
-            </button>
+            {/* Signature Glass Edge */}
+            <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-outline-variant/30 to-transparent"></div>
 
             {/* Header */}
             <div className="px-10 pt-10 pb-6 text-center flex-shrink-0">
-              <h2 className="text-3xl font-headline font-extrabold text-[#dfe4fe] tracking-tight">
+              <h2 className="text-3xl font-headline font-extrabold text-on-surface tracking-tight">
                 Optimization Comparison
               </h2>
-              <p className="text-[#a5aac2] mt-2 font-medium">
+              <p className="text-on-surface-variant mt-2 font-medium">
                 Review how AI transformed your resume bullets for maximum impact
               </p>
             </div>
 
             {/* Comparison Content — Scrollable */}
-            <div className="flex-1 overflow-y-auto px-10 pb-4">
+            <div className="flex-1 overflow-y-auto px-10 pb-10">
               <div className="flex flex-col md:flex-row gap-8">
                 {/* Column 1: Original */}
-                <div className="flex-1 bg-red-500/10 rounded-xl border-t border-red-500/20 relative px-8 pb-8 pt-12">
-                  <div className="absolute left-6 top-3 px-4 py-1.5 bg-red-900/60 text-red-300 text-[10px] font-bold uppercase tracking-widest rounded-full border border-red-500/40 flex items-center justify-center backdrop-blur-sm">
+                <div className="flex-1 bg-red-500/10 rounded-xl border-t border-red-500/20 relative group px-8 pb-8 pt-14 min-h-[300px]">
+                  <div className="absolute left-6 top-4 px-4 py-1.5 bg-red-900/60 text-red-300 text-[10px] font-bold uppercase tracking-widest rounded-full border border-red-500/40 flex items-center justify-center backdrop-blur-sm z-10">
                     Original
                   </div>
-                  <h3 className="text-xl font-headline font-bold text-[#dfe4fe] mb-6 flex items-center gap-2">
+                  <h3 className="text-xl font-headline font-bold text-on-surface mb-6 flex items-center gap-2">
                     <span className="material-symbols-outlined text-red-400">block</span>
                     Passive Phrasing
                   </h3>
-                  <ul className="space-y-6">
+                  <div className="space-y-6">
                     {isLoading ? (
-                      [1, 2, 3].map(i => (
-                        <li key={i} className="flex gap-4 items-start animate-pulse">
-                          <div className="w-4 h-4 rounded-full bg-red-500/20 mt-1"></div>
-                          <div className="flex-1 space-y-2">
-                             <div className="h-3 bg-red-500/10 rounded w-full"></div>
-                             <div className="h-3 bg-red-500/10 rounded w-[80%]"></div>
-                          </div>
-                        </li>
-                      ))
+                      <div className="space-y-6 animate-pulse">
+                        <div className="flex gap-4 items-start">
+                          <div className="w-6 h-6 mt-1 rounded bg-red-500/20"></div>
+                          <div className="h-4 w-full bg-red-500/10 rounded"></div>
+                        </div>
+                        <div className="flex gap-4 items-start">
+                          <div className="w-6 h-6 mt-1 rounded bg-red-500/20"></div>
+                          <div className="h-4 w-3/4 bg-red-500/10 rounded"></div>
+                        </div>
+                      </div>
                     ) : (
                       comparisons.map((item, idx) => (
-                        <motion.li
+                        <motion.div
                           key={idx}
-                          className={`flex gap-4 items-start ${idx === comparisons.length - 1 ? "opacity-40" : ""}`}
+                          className="flex gap-4 items-start group/item"
                           initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: idx === comparisons.length - 1 ? 0.4 : 1, x: 0 }}
+                          animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: idx * 0.15 }}
                         >
-                          <span className="material-symbols-outlined text-red-500/50 mt-1">remove</span>
-                          <p className={`text-[#a5aac2] leading-relaxed ${idx === comparisons.length - 1 ? "italic" : ""}`}>
+                          <span className="material-symbols-outlined text-red-500/40 text-sm mt-1">remove_circle</span>
+                          <p className={`text-sm text-red-200/70 leading-relaxed italic`}>
                             {item.original}
                           </p>
-                        </motion.li>
+                        </motion.div>
                       ))
                     )}
-                  </ul>
+                  </div>
                 </div>
 
                 {/* Column 2: AI Optimized */}
-                <div className="flex-1 bg-[#171f36] rounded-xl border border-emerald-500/50 shadow-[0_0_30px_rgba(16,185,129,0.15)] relative px-8 pb-8 pt-12">
-                  <div className="absolute left-6 top-3 px-4 py-1.5 bg-emerald-900/80 text-emerald-300 text-[10px] font-bold uppercase tracking-widest rounded-full border border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center justify-center backdrop-blur-sm">
+                <div className="flex-1 bg-surface-container-high rounded-xl border border-emerald-500/50 shadow-[0_0_30px_rgba(16,185,129,0.15)] relative px-8 pb-8 pt-14 min-h-[300px]">
+                  <div className="absolute left-6 top-4 px-4 py-1.5 bg-emerald-900/80 text-emerald-300 text-[10px] font-bold uppercase tracking-widest rounded-full border border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center justify-center backdrop-blur-sm z-10">
                     AI Optimized
                   </div>
-                  <h3 className="text-xl font-headline font-bold text-[#dfe4fe] mb-6 flex items-center gap-2">
+                  <h3 className="text-xl font-headline font-bold text-on-surface mb-6 flex items-center gap-2">
                     <span className="material-symbols-outlined text-emerald-400">bolt</span>
                     High Impact (STAR)
                   </h3>
-                  <ul className="space-y-6">
+                  <div className="space-y-6">
                     {isLoading ? (
-                      [1, 2, 3, 4].map(i => (
-                        <li key={i} className="flex gap-4 items-start animate-pulse">
-                          <div className="w-4 h-4 rounded-full bg-emerald-500/20 mt-1"></div>
-                          <div className="flex-1 space-y-2">
-                             <div className="h-3 bg-emerald-500/20 rounded w-full"></div>
-                             <div className="h-4 bg-emerald-500/10 rounded w-[90%]"></div>
-                             <div className="h-3 bg-emerald-500/10 rounded w-[70%]"></div>
-                          </div>
-                        </li>
-                      ))
+                      <div className="space-y-6 animate-pulse">
+                        <div className="h-20 w-full bg-emerald-500/5 rounded-lg"></div>
+                        <div className="flex gap-4 items-start">
+                          <div className="w-6 h-6 mt-1 rounded bg-emerald-500/20"></div>
+                          <div className="h-4 w-full bg-emerald-500/10 rounded"></div>
+                        </div>
+                      </div>
                     ) : (
                       comparisons.map((item, idx) => (
-                        <motion.li
+                        <motion.div
                           key={idx}
-                          className={`flex gap-4 items-start ${idx === 0 ? "bg-emerald-500/5 p-4 rounded-lg -m-4" : ""}`}
+                          className="flex gap-4 items-start bg-emerald-500/5 p-4 rounded-lg border border-emerald-500/10 hover:border-emerald-500/30 transition-all cursor-default"
                           initial={{ opacity: 0, x: 20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.3 + idx * 0.2 }}
                         >
-                          <span className="material-symbols-outlined text-emerald-400 mt-1">done_all</span>
-                          <p className="text-[#dfe4fe] leading-relaxed">
+                          <span className="material-symbols-outlined text-emerald-400 text-sm mt-1">check_circle</span>
+                          <p className="text-sm text-on-surface leading-relaxed font-medium">
                             {highlightMetrics(item.improved)}
                           </p>
-                        </motion.li>
+                        </motion.div>
                       ))
                     )}
-                  </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -173,7 +163,7 @@ export default function ComparisonView({ isOpen, onClose, onConfirm, comparisons
                 )}
               </motion.button>
               <button
-                className="text-slate-500 hover:text-slate-300 font-body text-sm transition-colors cursor-pointer"
+                className="text-slate-500 hover:text-slate-300 font-label text-sm transition-colors cursor-pointer"
                 onClick={onClose}
               >
                 Discard changes and go back
