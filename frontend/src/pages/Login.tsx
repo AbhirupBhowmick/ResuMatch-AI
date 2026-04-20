@@ -52,7 +52,7 @@ export default function Login() {
     } catch (err: any) {
       // Improved error reporting
       const msg = err.response?.data?.message || err.response?.data || err.message;
-      setErrorMsg(`Authentication Failed: ${msg}. Check if backend is running on :8081.`);
+      setErrorMsg(`Authentication Failed: ${msg}. Check API connection.`);
     } finally {
       setLoading(false);
     }

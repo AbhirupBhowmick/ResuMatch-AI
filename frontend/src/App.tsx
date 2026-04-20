@@ -1,4 +1,5 @@
-import { Routes, Route, BrowserRouter } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Routes, Route, BrowserRouter, Navigate, useLocation, useNavigate } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
@@ -10,8 +11,6 @@ import AssessmentResult from "./pages/AssessmentResult";
 import Pricing from "./pages/Pricing";
 import CoverLetter from "./pages/CoverLetter";
 import Settings from "./pages/Settings";
-import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 
 function AuthWatcher() {
   const location = useLocation();
@@ -20,19 +19,27 @@ function AuthWatcher() {
 
   useEffect(() => {
     // 1. Track current path (ignore auth paths)
-    if (!["/", "/login"].includes(location.pathname)) {
+    if (!["/", "/login", "/pricing"].includes(location.pathname)) {
       localStorage.setItem("lastPath", location.pathname);
     }
 
     // 2. Auto-login redirect if on landing/login with token
     if (token && ["/", "/login"].includes(location.pathname)) {
       const lastPath = localStorage.getItem("lastPath");
-      navigate(lastPath || "/dashboard");
+      navigate(lastPath || "/dashboard", { replace: true });
     }
   }, [location, navigate, token]);
 
   return null;
 }
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+};
 
 function App() {
   return (
@@ -40,17 +47,20 @@ function App() {
       <BrowserRouter>
         <AuthWatcher />
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<Landing />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/results" element={<Results />} />
-          <Route path="/interview" element={<InterviewPrep />} />
-          <Route path="/assessment" element={<Assessment />} />
-          <Route path="/assessment-result" element={<AssessmentResult />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/cover-letter" element={<CoverLetter />} />
+          
+          {/* Protected Routes */}
+          <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/results" element={<ProtectedRoute><Results /></ProtectedRoute>} />
+          <Route path="/interview" element={<ProtectedRoute><InterviewPrep /></ProtectedRoute>} />
+          <Route path="/assessment" element={<ProtectedRoute><Assessment /></ProtectedRoute>} />
+          <Route path="/assessment-result" element={<ProtectedRoute><AssessmentResult /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/cover-letter" element={<ProtectedRoute><CoverLetter /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </div>
