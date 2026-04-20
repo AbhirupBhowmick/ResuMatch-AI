@@ -120,13 +120,9 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => {
-                    try {
-                      window.location.href = `${import.meta.env.VITE_API_URL || ''}/oauth2/authorization/google`;
-                    } catch (err: any) {
-                      setErrorMsg("Google Login Failed on Backend");
-                    }
+                    window.location.href = `${import.meta.env.VITE_API_URL || ''}/oauth2/authorization/google`;
                   }}
-                  className="w-full flex items-center justify-center bg-white text-black font-bold py-4 rounded-xl shadow-lg hover:brightness-95 transition-all font-headline"
+                  className="w-full flex items-center justify-center bg-[#131314] text-[#e3e3e3] border border-[#8e918f]/30 font-bold py-4 rounded-full shadow-lg hover:bg-[#2b2b2b] transition-all font-headline"
                 >
                   <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
