@@ -52,7 +52,6 @@ public class User {
     @Column(unique = true)
     private String apiKey;
 
-    @Lob
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "TEXT")
     private String lastParsedResume;
 }

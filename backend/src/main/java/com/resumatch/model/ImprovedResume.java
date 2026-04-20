@@ -21,11 +21,9 @@ public class ImprovedResume {
 
     private String sectionName; // e.g. "Professional Summary", "Experience Bullet 1"
 
-    @Lob
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "TEXT")
     private String originalText;
 
-    @Lob
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "TEXT")
     private String aiImprovedText;
 }
