@@ -16,6 +16,7 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
   servlet:
     multipart:
       max-file-size: 10MB
@@ -28,25 +29,29 @@ spring:
           google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
+            # ADDED THIS: This tells Spring how to build the URI for Railway
+            redirect-uri: "{baseUrl}/login/oauth2/code/google"
             scope:
               - email
               - profile
 
 jwt:
   secret: ${JWT_SECRET}
-  expirationMs: 86400000 # 24 hours
+  expirationMs: 86400000
 
 razorpay:
   keyId: ${RAZORPAY_KEY_ID}
   keySecret: ${RAZORPAY_KEY_SECRET}
   webhookSecret: ${RAZORPAY_WEBHOOK_SECRET}
 
-
 gemini:
   api:
     key: ${GEMINI_API_KEY}
 
 server:
-  port: 8081
+  # FIXED THIS: Match Railway's expected port
+  port: ${PORT:8080}
+  # ADDED THIS: Crucial for Railway's proxy to talk to Google correctly
+  forward-headers-strategy: framework
   error:
     include-message: always
