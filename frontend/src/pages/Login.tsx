@@ -117,13 +117,12 @@ export default function Login() {
 
             <div className="space-y-4">
               <div className="flex justify-center w-full">
-                <button
-                  type="button"
-                  onClick={() => {
+                <a
+                  href={(() => {
                     const envUrl = import.meta.env.VITE_API_URL || '';
                     const baseUrl = envUrl === '' ? '' : (envUrl.startsWith('http') ? envUrl : `https://${envUrl}`);
-                    window.location.href = `${baseUrl}/oauth2/authorization/google`;
-                  }}
+                    return `${baseUrl}/oauth2/authorization/google`;
+                  })()}
                   className="w-full flex items-center justify-center bg-[#131314] text-[#e3e3e3] border border-[#8e918f]/30 font-bold py-4 rounded-full shadow-lg hover:bg-[#2b2b2b] transition-all font-headline"
                 >
                   <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
@@ -133,7 +132,7 @@ export default function Login() {
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                   </svg>
                   Continue with Google
-                </button>
+                </a>
               </div>
 
               <div className="relative flex items-center py-4">
