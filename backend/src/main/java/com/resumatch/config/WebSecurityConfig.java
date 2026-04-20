@@ -64,19 +64,20 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(AbstractHttpConfigurer::disable)
+        http
+            .csrf(csrf -> csrf.disable()) // <--- THIS LINE IS CRITICAL
+            .cors(org.springframework.security.config.Customizer.withDefaults())
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/**").permitAll()
+                .requestMatchers("/api/auth/**", "/oauth2/**", "/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/payments/webhook").permitAll()
-                .requestMatchers("/api/v1/payments/**").authenticated() 
-                .requestMatchers("/api/v1/payment/**").authenticated() 
                 .requestMatchers("/api/v1/extension/quick-scan").permitAll() 
-                .requestMatchers("/api/v1/resume/upload").authenticated()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .anyRequest().authenticated()
+            )
+            .oauth2Login(oauth2 -> oauth2
+                .defaultSuccessUrl("https://resu-match-ai-eight.vercel.app/dashboard", true)
             );
 
         http.authenticationProvider(authenticationProvider());
