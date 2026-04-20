@@ -2,6 +2,7 @@ spring:
   application:
     name: resumatch-ai
 
+  # Database Configuration (Neon/PostgreSQL)
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -17,11 +18,13 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  # File Upload Settings
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
 
+  # Security & OAuth2 Configuration
   security:
     oauth2:
       client:
@@ -29,29 +32,34 @@ spring:
           google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
-            # ADDED THIS: This tells Spring how to build the URI for Railway
+            # This template ensures Spring builds the return URL using the Railway domain
             redirect-uri: "{baseUrl}/login/oauth2/code/google"
             scope:
               - email
               - profile
 
+# JWT Authentication
 jwt:
   secret: ${JWT_SECRET}
-  expirationMs: 86400000
+  expirationMs: 86400000 # 24 hours
 
+# Payment Integration
 razorpay:
   keyId: ${RAZORPAY_KEY_ID}
   keySecret: ${RAZORPAY_KEY_SECRET}
   webhookSecret: ${RAZORPAY_WEBHOOK_SECRET}
 
+# AI Integration
 gemini:
   api:
     key: ${GEMINI_API_KEY}
 
+# Server & Proxy Configuration
 server:
-  # FIXED THIS: Match Railway's expected port
+  # Uses Railway's dynamic port, defaults to 8080
   port: ${PORT:8080}
-  # ADDED THIS: Crucial for Railway's proxy to talk to Google correctly
+  # CRITICAL: Tells Spring to trust 'X-Forwarded-Proto' headers from Railway's proxy
+  # This fixes the 'http' vs 'https' redirect mismatch in Google OAuth
   forward-headers-strategy: framework
   error:
     include-message: always
