@@ -1,7 +1,5 @@
-import Sidebar from "../components/Sidebar";
-import Header from "../components/Header";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 
 declare global {
@@ -208,11 +206,20 @@ const Pricing = () => {
   };
 
   return (
-    <div className="bg-[#070d1f] text-[#dfe4fe] min-h-screen font-body selection:bg-primary/30">
-      <Sidebar />
-      <Header title="Invest in Your Career" />
+    <div className="bg-[#070d1f] text-[#dfe4fe] min-h-screen font-body selection:bg-primary/30 flex flex-col">
+      <nav className="w-full sticky top-0 z-50 bg-[#11192e] transition-colors duration-300 shadow-2xl shadow-primary/5 border-b border-[#ffffff]/10">
+        <div className="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
+          <div className="text-2xl font-bold tracking-tighter text-white font-headline">ResuMatch AI</div>
+          <div className="flex items-center space-x-6">
+            <Link className="font-headline tracking-tight font-bold text-[#dfe4fe]/60 hover:text-primary transition-all duration-200 cursor-pointer active:scale-95 text-sm" to="/">Home</Link>
+            <Link className="font-headline tracking-tight font-bold text-[#dfe4fe]/60 hover:text-primary transition-all duration-200 cursor-pointer active:scale-95 text-sm" to={token ? "/dashboard" : "/login"}>
+              {token ? "Dashboard" : "Log In"}
+            </Link>
+          </div>
+        </div>
+      </nav>
 
-      <main className="lg:ml-64 pt-24 px-8 pb-20">
+      <main className="flex-grow pt-16 px-8 pb-20">
         <div className="max-w-5xl mx-auto text-center mb-16">
           <h2 className="text-4xl font-black mb-4 font-headline tracking-tight">Simple, transparent <span className="text-primary">pricing</span></h2>
           <p className="text-[#dfe4fe]/60 max-w-2xl mx-auto font-medium">Unlock elite AI interview preparation. Cancel anytime.</p>
