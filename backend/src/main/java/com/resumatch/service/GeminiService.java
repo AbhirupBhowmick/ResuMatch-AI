@@ -26,7 +26,7 @@ public class GeminiService {
     private static final Logger logger = LoggerFactory.getLogger(GeminiService.class);
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private static final String MODEL = "gemini-pro-latest";
+    private static final String MODEL = "gemini-2.0-flash";
 
     @Value("${gemini.api.key}")
     private String apiKey;
