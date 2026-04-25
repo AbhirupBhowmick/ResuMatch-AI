@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useNotification } from "../context/NotificationContext";
 
@@ -212,13 +212,16 @@ const Pricing = () => {
   };
 
   return (
-    <section id="pricing" className="py-24 px-8 relative z-20 text-[#dfe4fe] font-body">
-        <div className="max-w-5xl mx-auto text-center mb-16">
-          <h2 className="text-4xl font-black mb-4 font-headline tracking-tight">Simple, transparent <span className="text-primary">pricing</span></h2>
-          <p className="text-[#dfe4fe]/60 max-w-2xl mx-auto font-medium">Unlock elite AI interview preparation. Cancel anytime.</p>
+    <section id="pricing" className="py-32 relative overflow-hidden font-body bg-transparent">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary-dim/15 via-background to-background pointer-events-none"></div>
+      
+      <div className="max-w-7xl mx-auto px-8 relative z-10">
+        <div className="text-center mb-16">
+          <h1 className="text-5xl md:text-6xl font-headline font-extrabold tracking-tight text-on-surface mb-6">Simple, transparent pricing</h1>
+          <p className="text-lg font-body text-on-surface-variant max-w-2xl mx-auto">Elevate your professional narrative with our curated AI tools. Choose the plan that fits your career trajectory.</p>
           {isPremium && (
-            <div className="mt-4 inline-flex items-center gap-2 bg-primary/10 border border-primary/30 px-5 py-2 rounded-full">
-              <span className="material-symbols-outlined text-primary text-lg">verified</span>
+            <div className="mt-6 inline-flex items-center gap-2 bg-primary/10 border border-primary/30 px-5 py-2 rounded-full">
+              <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
               <span className="text-sm font-bold text-primary">
                 You are on the <span className="uppercase">{currentTier.replace("_", " ")}</span> plan
               </span>
@@ -226,23 +229,21 @@ const Pricing = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
           {/* FREE TIER */}
           <PricingCard 
             name="Free"
             tierKey="FREE"
             price="0"
-            description="Perfect for testing the waters."
             features={[
               { text: "1 Resume Audit", included: true },
               { text: "Basic ATS Score", included: true },
               { text: "Top 3 Suggestions", included: true },
-              { text: "PDF Downloads", included: false }
+              { text: "Export to PDF", included: false }
             ]}
             buttonConfig={getButtonConfig("FREE", "Current Plan")}
             onBuy={() => navigate("/dashboard")}
             isCurrentTier={isCurrentTier("FREE")}
-            isOwned={isTierOwned("FREE")}
           />
 
           {/* STARTER TIER */}
@@ -250,17 +251,15 @@ const Pricing = () => {
             name="Starter"
             tierKey="STARTER"
             price="19"
-            description="Essential tools for active seekers."
             features={[
-              { text: "5 AI Audits", included: true },
-              { text: "Full Keyword Analysis", included: true },
-              { text: "MCQ Tests (5 Qs)", included: true },
-              { text: "Standard PDF Export", included: true }
+              { text: "5 Deep-Dive Audits", included: true },
+              { text: "Keyword optimization", included: true },
+              { text: "ATS compatibility score", included: true },
+              { text: "Email support", included: true }
             ]}
             buttonConfig={getButtonConfig("STARTER", "Buy Starter")}
             onBuy={() => handlePayment(19, "STARTER")}
             isCurrentTier={isCurrentTier("STARTER")}
-            isOwned={isTierOwned("STARTER")}
           />
 
           {/* ACTIVE_HUNTER TIER */}
@@ -269,17 +268,15 @@ const Pricing = () => {
             tierKey="ACTIVE_HUNTER"
             price="59"
             recommended
-            description="Our most popular plan for engineers."
             features={[
-              { text: "Unlimited AI Audits", included: true },
-              { text: "STAR Method Generator", included: true },
-              { text: "Dynamic MCQ Assessments", included: true },
+              { text: "Unlimited Resume Audits", included: true },
+              { text: "Cover Letter Generator", included: true },
+              { text: "LinkedIn Profile Analysis", included: true },
               { text: "Priority Support", included: true }
             ]}
-            buttonConfig={getButtonConfig("ACTIVE_HUNTER", "Go Unlimited")}
+            buttonConfig={getButtonConfig("ACTIVE_HUNTER", "Upgrade Now")}
             onBuy={() => handlePayment(59, "ACTIVE_HUNTER")}
             isCurrentTier={isCurrentTier("ACTIVE_HUNTER")}
-            isOwned={isTierOwned("ACTIVE_HUNTER")}
           />
 
           {/* PRO_ACHIEVER TIER */}
@@ -287,35 +284,16 @@ const Pricing = () => {
             name="Pro Achiever"
             tierKey="PRO_ACHIEVER"
             price="99"
-            description="For elite candidates aiming higher."
             features={[
               { text: "Everything in Hunter", included: true },
-              { text: "AI Cover Letter Gen", included: true },
+              { text: "Mock Interview AI Bot", included: true },
               { text: "Rank Predictor", included: true },
               { text: "Multi-Format Export", included: true }
             ]}
             buttonConfig={getButtonConfig("PRO_ACHIEVER", "Get Everything")}
             onBuy={() => handlePayment(99, "PRO_ACHIEVER")}
             isCurrentTier={isCurrentTier("PRO_ACHIEVER")}
-            isOwned={isTierOwned("PRO_ACHIEVER")}
           />
-        </div>
-
-        {/* Trust Section */}
-        <div className="mt-24 text-center">
-            <h3 className="text-[#dfe4fe]/40 text-sm font-black uppercase tracking-[0.3em] mb-12">Beyond just keywords. We curate your professional identity.</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto text-left">
-                <div className="bg-surface-container-low p-8 rounded-2xl border border-outline-variant/10">
-                    <span className="material-symbols-outlined text-primary text-3xl mb-4">leaderboard</span>
-                    <h4 className="text-xl font-bold mb-3 font-headline">Rank Prediction</h4>
-                    <p className="text-sm text-[#dfe4fe]/60 leading-relaxed font-medium">See how you stack up against 5,000+ candidates for similar roles in our anonymized database.</p>
-                </div>
-                <div className="bg-surface-container-low p-8 rounded-2xl border border-outline-variant/10">
-                    <span className="material-symbols-outlined text-emerald-400 text-3xl mb-4">auto_awesome</span>
-                    <h4 className="text-xl font-bold mb-3 font-headline">STAR Evolution</h4>
-                    <p className="text-sm text-[#dfe4fe]/60 leading-relaxed font-medium">Transform boring bullets into high-impact narratives that command attention from hiring managers.</p>
-                </div>
-            </div>
         </div>
 
         {loading && (
@@ -331,6 +309,7 @@ const Pricing = () => {
             </p>
           </div>
         )}
+      </div>
     </section>
   );
 };
@@ -341,75 +320,70 @@ interface ButtonConfig {
   style: "active" | "included" | "buy";
 }
 
-const PricingCard = ({ name, price, description, features, onBuy, buttonConfig, recommended, isCurrentTier, isOwned }: {
+const PricingCard = ({ name, price, features, onBuy, buttonConfig, recommended, isCurrentTier }: {
   name: string;
   tierKey: string;
   price: string;
-  description: string;
   features: { text: string; included: boolean }[];
   onBuy: () => void;
   buttonConfig: ButtonConfig;
   recommended?: boolean;
   isCurrentTier: boolean;
-  isOwned: boolean;
-}) => (
-  <div className={`relative p-6 rounded-3xl border transition-all duration-300 hover:-translate-y-2 flex flex-col
-    ${isCurrentTier 
-      ? 'bg-[#171f36] border-emerald-500 shadow-[0_20px_50px_rgba(16,185,129,0.15)] z-10 ring-2 ring-emerald-500/30' 
-      : recommended 
-        ? 'bg-[#171f36] border-primary shadow-[0_20px_50px_rgba(79,70,229,0.15)] z-10' 
-        : 'bg-[#11192e] border-[#ffffff]/10 hover:border-[#ffffff]/20'
-    }`}>
-    
-    {/* Badge area */}
-    {isCurrentTier && (
-      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
-        <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-        Your Plan
+}) => {
+  const cardContent = (
+    <div className={`bg-surface-container-low rounded-xl p-8 flex flex-col h-full relative ${recommended ? 'z-10' : 'border-t border-outline-variant/20'}`}>
+      <div className="flex justify-between items-center mb-4 min-h-[32px]">
+        <h3 className={`font-headline text-xl font-semibold ${recommended ? 'text-primary' : 'text-on-surface'}`}>{name}</h3>
+        {isCurrentTier && (
+          <span className="inline-flex items-center px-2 py-1 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-wider">Your Plan</span>
+        )}
+        {!isCurrentTier && recommended && (
+          <span className="inline-flex items-center px-2 py-1 rounded bg-primary-dim/20 text-primary-dim text-xs font-bold uppercase tracking-wider">Most Popular</span>
+        )}
       </div>
-    )}
-    {!isCurrentTier && recommended && (
-      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg">
-        Most Popular
+      <div className="mb-6">
+        <span className="text-4xl font-headline font-bold text-on-surface">₹{price}</span>
+        <span className="text-sm text-on-surface-variant">/mo</span>
       </div>
-    )}
-
-    <div className="mb-6">
-      <h3 className="text-lg font-bold mb-1 font-headline">{name}</h3>
-      <div className="flex items-baseline gap-1 mb-3">
-        <span className="text-3xl font-black">₹{price}</span>
-        <span className="text-[#dfe4fe]/40 text-xs">/mo</span>
-      </div>
-      <p className="text-xs text-[#dfe4fe]/60 leading-relaxed font-medium h-10">{description}</p>
-    </div>
-    
-    <div className="space-y-3 mb-8 flex-1">
-      {features.map((feature, i) => (
-        <div key={i} className="flex items-start gap-2.5 group/item">
-          <span className={`material-symbols-outlined text-lg transition-transform mt-0.5 group-hover/item:scale-110 ${feature.included ? (isOwned ? 'text-emerald-400' : 'text-primary') : 'text-[#dfe4fe]/20'}`}>
-            {feature.included ? 'check_circle' : 'cancel'}
-          </span>
-          <span className={`text-xs font-medium transition-colors ${feature.included ? 'text-[#dfe4fe]/80 group-hover:text-[#dfe4fe]' : 'text-[#dfe4fe]/40 line-through decoration-1 opacity-50'}`}>{feature.text}</span>
-        </div>
-      ))}
-    </div>
-
-    <button 
-      onClick={buttonConfig.disabled ? undefined : onBuy}
-      disabled={buttonConfig.disabled}
-      className={`w-full py-3.5 rounded-xl font-black text-xs tracking-tight transition-all cursor-pointer
-        ${buttonConfig.style === "active" 
-          ? 'bg-emerald-500/20 text-emerald-400 border-2 border-emerald-500/40 cursor-default' 
-          : buttonConfig.style === "included" 
-            ? 'bg-[#171f36]/50 text-emerald-400/60 border border-emerald-500/20 cursor-default' 
-            : recommended 
-              ? 'bg-primary text-white shadow-lg shadow-primary/25 hover:brightness-110 active:scale-95' 
-              : 'bg-[#171f36] text-[#dfe4fe] border border-[#ffffff]/10 hover:bg-[#1f2945] active:scale-95'
+      <ul className="space-y-4 mb-8 flex-1">
+        {features.map((feature, i) => (
+          <li key={i} className="flex items-start">
+            <span className={`material-symbols-outlined text-[20px] mr-3 mt-0.5 ${feature.included ? 'text-primary' : 'text-outline/50 opacity-50'}`} style={{ fontVariationSettings: "'FILL' 1" }}>
+              {feature.included ? 'check_circle' : 'cancel'}
+            </span>
+            <span className={`text-sm ${feature.included ? 'text-on-surface' : 'text-on-surface-variant opacity-50 line-through decoration-1'}`}>
+              {feature.text}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <button 
+        onClick={buttonConfig.disabled ? undefined : onBuy}
+        disabled={buttonConfig.disabled}
+        className={`w-full py-3 px-4 rounded-lg font-semibold transition-all text-sm tracking-wide ${
+          buttonConfig.style === "active" 
+            ? 'border-2 border-emerald-500/40 text-emerald-400 bg-emerald-500/10 cursor-default'
+            : buttonConfig.style === "included"
+              ? 'border border-emerald-500/20 text-emerald-400/60 bg-surface-container/50 cursor-default'
+              : recommended
+                ? 'bg-primary-container text-on-primary-container font-bold shadow-[inset_0_2px_4px_rgba(20,0,126,0.3)] hover:brightness-110 active:scale-95'
+                : 'bg-surface-container text-on-surface hover:bg-surface-container-high active:scale-95 border border-outline-variant/20 tracking-normal'
         }`}
-    >
-      {buttonConfig.text}
-    </button>
-  </div>
-);
+      >
+        {buttonConfig.text}
+      </button>
+    </div>
+  );
+
+  if (recommended) {
+    return (
+      <div className="relative p-[1px] rounded-xl bg-gradient-to-b from-primary to-surface-container-low shadow-[0_0_32px_rgba(167,165,255,0.15)] flex flex-col h-full">
+        {cardContent}
+      </div>
+    );
+  }
+
+  return cardContent;
+};
 
 export default Pricing;
