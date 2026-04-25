@@ -26,7 +26,7 @@ public class GeminiService {
     private static final Logger logger = LoggerFactory.getLogger(GeminiService.class);
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private static final String MODEL = "gemini-flash-latest";
+    private static final String MODEL = "gemini-1.5-flash";
 
     @Value("${gemini.api.key}")
     private String apiKey;
@@ -38,7 +38,7 @@ public class GeminiService {
             throw new GeminiAuthException("Gemini API Key is not configured.");
         }
         String maskedKey = apiKey.length() > 4 ? apiKey.substring(0, 4) + "..." : "****";
-        logger.info("Gemini Key Loaded: " + maskedKey);
+        logger.info("Gemini Key Loaded: " + maskedKey + " using model: " + MODEL);
     }
 
 
@@ -52,20 +52,23 @@ public class GeminiService {
 
         logger.info("Analyzing resume for industry: {}. Experience: {}. Text length: {}", industry, experienceLevel, parsedText.length());
 
-        String prompt = "You are an elite ATS and technical recruiter evaluator. Analyze the following resume text. " +
-                "The candidate targets the '" + industry + "' industry with an experience level of '" + experienceLevel + "'.\n\n" +
-                "Evaluate the resume and return ONLY a strict JSON object with exactly these fields:\n" +
-                "- \"score\": integer representing the ATS score from 0 to 100 based on keyword density and structural integrity.\n" +
-                "- \"strengths\": list of strings detailing strong points.\n" +
-                "- \"missingKeywords\": list of strings detailing critical missing skills or words.\n" +
-                "- \"jobSuggestions\": list of strings detailing suggested job titles.\n" +
-                "- \"improvedSummary\": string rewriting their summary to be more impactful.\n\n" +
-                "CRITICAL INSTRUCTION: You MUST return ONLY valid JSON. If the input text is completely unrelated to a resume (e.g., a class routine, gibberish, or blank), you MUST STILL return the strict JSON format with a score of 0, and mention in the strengths/missingKeywords that the document is not a recognizable resume.\n\n" +
+        String systemInstruction = "You are an elite ATS and technical recruiter evaluator. " +
+                "Evaluate the resume based on the provided industry and experience level. " +
+                "Return result as STRICT JSON.";
+
+        String prompt = "Candidate targets '" + industry + "' industry with experience level '" + experienceLevel + "'.\n\n" +
+                "Evaluate and return exactly this JSON schema:\n" +
+                "{\n" +
+                "  \"score\": integer (0-100),\n" +
+                "  \"strengths\": [\"string\"],\n" +
+                "  \"missingKeywords\": [\"string\"],\n" +
+                "  \"jobSuggestions\": [\"string\"],\n" +
+                "  \"improvedSummary\": \"string\"\n" +
+                "}\n\n" +
                 "Resume Text:\n" + parsedText;
 
-
         try {
-            String jsonText = callGeminiForRawText(prompt);
+            String jsonText = callGemini(prompt, systemInstruction);
             String cleaned = extractJson(jsonText);
             if (cleaned != null) {
                 return objectMapper.readValue(cleaned, ResumeAnalysisResponse.class);
@@ -80,19 +83,14 @@ public class GeminiService {
     // ===== A. STAR METHOD GENERATOR (Hunter+) =====
 
     public Map<String, Object> generateStarRewrite(String resumeBullet, String jobDescription) {
-        String prompt = "You are an elite Tech Recruiter. You will receive a snippet of a candidate's resume.\n\n" +
-                "Rule 1: If the snippet is just a name, email, or contact info, do not change it. Return it as-is.\n" +
-                "Rule 2: If it is an experience or project bullet, rewrite it using the STAR method.\n" +
-                "Rule 3: DO NOT literally write the words 'Situation:', 'Task:', 'Action:', or 'Result:'. " +
-                "Combine them into ONE single, professional, flowing sentence that starts with a strong action verb (e.g., 'Developed', 'Architected').\n" +
-                "Rule 4: NEVER return '...' or empty strings. Always output a full, high-impact sentence.\n\n" +
-                "Resume Snippet: " + resumeBullet + "\n\n" +
+        String systemInstruction = "You are an elite Tech Recruiter. Rewrite resume bullets using the STAR method. Return ONLY valid JSON.";
+        
+        String prompt = "Resume Snippet: " + resumeBullet + "\n\n" +
                 "Job Context: " + jobDescription + "\n\n" +
-                "Return ONLY valid JSON. Do NOT wrap in markdown code blocks.\n" +
                 "Return JSON: { \"original\": \"...\", \"optimized_bullet\": \"Actual generated high-impact bullet here\" }";
 
         try {
-            String raw = callGeminiForRawText(prompt);
+            String raw = callGemini(prompt, systemInstruction);
             String cleaned = extractJson(raw);
             if (cleaned != null) {
                 return objectMapper.readValue(cleaned, new TypeReference<Map<String, Object>>() {});
@@ -107,15 +105,14 @@ public class GeminiService {
     // ===== B. SMART FLASHCARDS (Hunter+) =====
 
     public List<Map<String, Object>> generateFlashcards(String jobDescription) {
-        String prompt = "You are a Senior Engineering Manager interviewing a candidate for the provided job description. " +
-                "Generate exactly 5 highly specific interview questions based on the requirements.\n\n" +
-                "Job Description: " + jobDescription + "\n\n" +
-                "Return ONLY valid JSON. Do NOT wrap in markdown code blocks.\n" +
+        String systemInstruction = "You are a Senior Engineering Manager. Generate exactly 5 interview questions. Return ONLY a JSON array.";
+
+        String prompt = "Job Description: " + jobDescription + "\n\n" +
                 "Return a JSON array of objects: [ { \"question\": \"...\", \"difficulty\": \"Medium/Hard\", " +
-                "\"recruiter_perspective\": \"What I am actually looking for when I ask this...\" } ]";
+                "\"recruiter_perspective\": \"...\" } ]";
 
         try {
-            String raw = callGeminiForRawText(prompt);
+            String raw = callGemini(prompt, systemInstruction);
             String cleaned = extractJsonArray(raw);
             if (cleaned != null) {
                 return objectMapper.readValue(cleaned, new TypeReference<List<Map<String, Object>>>() {});
@@ -130,27 +127,22 @@ public class GeminiService {
     // ===== C. AI COVER LETTER GENERATOR (Pro) =====
 
     public Map<String, Object> generateCoverLetter(String parsedResume, String jobDescription) {
-        String systemPrompt = "You are an elite career strategist writing a custom cover letter based on the applicant's resume and a target job description.\n\n" +
-                "CRITICAL RULES:\n" +
-                "1. Explicitly mention the target Company Name and the exact Job Title in the first paragraph.\n" +
-                "2. Select 2-3 specific technical skills mentioned in the Job Description and write a paragraph explaining how the candidate used those exact skills in their past experience.\n" +
-                "3. Write completely fluent, finalized, and highly professional paragraphs. NEVER output words like 'para 1', 'para 2', or '[insert here]'.\n\n" +
-                "Output ONLY a valid JSON object. Do not wrap it in markdown block quotes. Use exactly this schema:\n" +
+        String systemInstruction = "You are an elite career strategist writing custom cover letters. Return result as STRICT JSON.";
+
+        String prompt = "=== CANDIDATE RESUME ===\n" + parsedResume + "\n\n" +
+                "=== TARGET JOB DESCRIPTION ===\n" + jobDescription + "\n\n" +
+                "Use exactly this schema:\n" +
                 "{\n" +
                 "  \"subject_line\": \"An attention-grabbing email subject line\",\n" +
                 "  \"body_paragraphs\": [\n" +
-                "    \"The complete first paragraph text...\",\n" +
-                "    \"The complete second paragraph text detailing skills...\",\n" +
-                "    \"The complete closing paragraph with a call to action...\"\n" +
+                "    \"Paragraph 1...\",\n" +
+                "    \"Paragraph 2...\",\n" +
+                "    \"Paragraph 3...\"\n" +
                 "  ]\n" +
                 "}";
 
-        String fullPrompt = systemPrompt + "\n\n" +
-                "=== CANDIDATE RESUME ===\n" + parsedResume + "\n\n" +
-                "=== TARGET JOB DESCRIPTION ===\n" + jobDescription;
-
         try {
-            String raw = callGeminiForRawText(fullPrompt);
+            String raw = callGemini(prompt, systemInstruction);
             String cleaned = extractJson(raw);
             if (cleaned != null) {
                 return objectMapper.readValue(cleaned, new TypeReference<Map<String, Object>>() {});
@@ -165,17 +157,14 @@ public class GeminiService {
     // ===== D. COMPETITIVE RANK PREDICTOR (Pro) =====
 
     public Map<String, Object> predictCompetitiveRank(String parsedResume, String jobDescription) {
-        String prompt = "Simulate an applicant pool of 200 candidates for this job description. " +
-                "Compare the provided resume against this simulated pool.\n\n" +
-                "Resume:\n" + parsedResume + "\n\n" +
+        String systemInstruction = "Simulate an applicant pool of 200 candidates. Compare the provided resume. Return result as STRICT JSON.";
+
+        String prompt = "Resume:\n" + parsedResume + "\n\n" +
                 "Job Description:\n" + jobDescription + "\n\n" +
-                "Return ONLY valid JSON. Do NOT wrap in markdown code blocks.\n" +
-                "Return a JSON object: { \"estimated_percentile\": 82, " +
-                "\"top_competitor_advantage\": \"80% of applicants have AWS certification, which is missing here.\", " +
-                "\"quick_win_recommendation\": \"...\" }";
+                "Return a JSON object: { \"estimated_percentile\": 82, \"top_competitor_advantage\": \"...\", \"quick_win_recommendation\": \"...\" }";
 
         try {
-            String raw = callGeminiForRawText(prompt);
+            String raw = callGemini(prompt, systemInstruction);
             String cleaned = extractJson(raw);
             if (cleaned != null) {
                 return objectMapper.readValue(cleaned, new TypeReference<Map<String, Object>>() {});
@@ -190,15 +179,14 @@ public class GeminiService {
     // ===== E. CHROME EXTENSION QUICK SCAN =====
 
     public Map<String, Object> quickScan(String resumeText, String jobDescriptionText) {
-        String prompt = "You are an ATS expert. Compare the provided resume against the job description. " +
-                "Return a match percentage and a list of missing keywords that the resume should include.\n\n" +
-                "Resume:\n" + resumeText + "\n\n" +
+        String systemInstruction = "You are an ATS expert. Return match percentage and missing keywords as STRICT JSON.";
+
+        String prompt = "Resume:\n" + resumeText + "\n\n" +
                 "Job Description:\n" + jobDescriptionText + "\n\n" +
-                "Return ONLY valid JSON. Do NOT wrap in markdown code blocks.\n" +
                 "Return JSON: { \"matchPercentage\": 75, \"missingKeywords\": [\"keyword1\", \"keyword2\"] }";
 
         try {
-            String raw = callGeminiForRawText(prompt);
+            String raw = callGemini(prompt, systemInstruction);
             String cleaned = extractJson(raw);
             if (cleaned != null) {
                 return objectMapper.readValue(cleaned, new TypeReference<Map<String, Object>>() {});
@@ -212,19 +200,31 @@ public class GeminiService {
 
     // ===== INTERNAL HELPERS =====
 
-    private String callGeminiForRawText(String prompt) {
+    private String callGemini(String prompt, String systemInstruction) {
         if (apiKey == null || apiKey.trim().isEmpty()) {
-            throw new GeminiAuthException("Gemini API Key is missing. Cannot call API.");
+            throw new GeminiAuthException("Gemini API Key is missing.");
         }
         String url = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent?key=" + apiKey;
 
-
         Map<String, Object> requestBody = new HashMap<>();
+        
+        if (systemInstruction != null) {
+            Map<String, Object> sysInst = new HashMap<>();
+            Map<String, Object> sysParts = new HashMap<>();
+            sysParts.put("text", systemInstruction);
+            sysInst.put("parts", List.of(sysParts));
+            requestBody.put("system_instruction", sysInst);
+        }
+
         Map<String, Object> contents = new HashMap<>();
         Map<String, Object> parts = new HashMap<>();
         parts.put("text", prompt);
         contents.put("parts", List.of(parts));
         requestBody.put("contents", List.of(contents));
+
+        Map<String, Object> genConfig = new HashMap<>();
+        genConfig.put("response_mime_type", "application/json");
+        requestBody.put("generationConfig", genConfig);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -237,34 +237,33 @@ public class GeminiService {
             if (body != null && body.containsKey("candidates")) {
                 List<Map<String, Object>> candidates = (List<Map<String, Object>>) body.get("candidates");
                 if (!candidates.isEmpty()) {
-                    Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
-                    List<Map<String, Object>> responseParts = (List<Map<String, Object>>) content.get("parts");
-                    return (String) responseParts.get(0).get("text");
+                    Map<String, Object> firstCandidate = candidates.get(0);
+                    if (firstCandidate.containsKey("content")) {
+                        Map<String, Object> content = (Map<String, Object>) firstCandidate.get("content");
+                        List<Map<String, Object>> responseParts = (List<Map<String, Object>>) content.get("parts");
+                        if (responseParts != null && !responseParts.isEmpty()) {
+                            return (String) responseParts.get(0).get("text");
+                        }
+                    }
                 }
             }
+            logger.error("Empty or invalid response from Gemini: {}", body);
         } catch (Exception e) {
-            logger.error("Error in callGeminiForRawText: {}", e.getMessage());
+            logger.error("Gemini API Call Failed: {}", e.getMessage());
         }
         return "";
     }
 
     private String extractJson(String raw) {
         if (raw == null || raw.trim().isEmpty()) return null;
-        
-        // Remove markdown code block markers if present
-        String cleaned = raw.replaceAll("```json", "").replaceAll("```", "").trim();
-        
-        int startIdx = cleaned.indexOf("{");
-        int endIdx = cleaned.lastIndexOf("}");
-        
+        int startIdx = raw.indexOf("{");
+        int endIdx = raw.lastIndexOf("}");
         if (startIdx != -1 && endIdx != -1 && endIdx > startIdx) {
-            return cleaned.substring(startIdx, endIdx + 1);
+            return raw.substring(startIdx, endIdx + 1);
         }
-        
-        logger.error("Could not find valid JSON object in response: {}", raw.length() > 500 ? raw.substring(0, 500) : raw);
+        logger.error("Could not find valid JSON object in response.");
         return null;
     }
-
 
     private String extractJsonArray(String raw) {
         if (raw == null || raw.isEmpty()) return null;
@@ -273,7 +272,7 @@ public class GeminiService {
         if (startIdx != -1 && endIdx != -1 && endIdx > startIdx) {
             return raw.substring(startIdx, endIdx + 1);
         }
-        logger.error("Could not find valid JSON array in response: {}", raw.substring(0, Math.min(200, raw.length())));
+        logger.error("Could not find valid JSON array in response.");
         return null;
     }
 }
