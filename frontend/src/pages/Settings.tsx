@@ -1,11 +1,11 @@
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+
 import axios from "axios";
 
 export default function Settings() {
-  const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState("profile");
   const [user, setUser] = useState({
     name: localStorage.getItem("user_name") || "",
