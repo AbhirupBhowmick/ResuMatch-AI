@@ -53,7 +53,12 @@ function AuthWatcher() {
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem("token");
-  if (!token) {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const urlToken = params.get("token");
+
+  // If no token in storage AND no token in current URL params, redirect
+  if (!token && !urlToken) {
     return <Navigate to="/login" replace />;
   }
   return <>{children}</>;

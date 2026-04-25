@@ -32,8 +32,8 @@ spring:
           google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
-            # This template ensures Spring builds the return URL using the Railway domain
-            redirect-uri: "{baseUrl}/login/oauth2/code/google"
+            # Explicit absolute HTTPS URL to prevent mismatches on Railway
+            redirect-uri: "https://resumatch-ai-production.up.railway.app/login/oauth2/code/google"
             scope:
               - email
               - profile
