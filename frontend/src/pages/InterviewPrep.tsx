@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
+import { useNotification } from "../context/NotificationContext";
 
 interface Question {
   id?: number;
@@ -23,6 +24,7 @@ export default function InterviewPrep() {
   const [mcqLoading, setMcqLoading] = useState(false);
   const [toast, setToast] = useState<{show: boolean, message: string}>({ show: false, message: "" });
   
+  const { showNotification } = useNotification();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,7 +58,7 @@ export default function InterviewPrep() {
     } catch (err: any) {
       const errorData = err.response?.data;
       if (errorData?.status === "UPGRADE_REQUIRED") {
-        alert(errorData.message);
+        showNotification("error", errorData.message, "Upgrade Required");
         navigate("/pricing");
       } else {
         setErrorMsg(`Failed to generate: ${errorData?.message || err.message}`);
@@ -80,7 +82,7 @@ export default function InterviewPrep() {
     } catch (err: any) {
       const errorData = err.response?.data;
       if (errorData?.status === "UPGRADE_REQUIRED") {
-        alert(errorData.message);
+        showNotification("error", errorData.message, "Upgrade Required");
         navigate("/pricing");
       } else {
         setErrorMsg(`MCQ Error: ${errorData?.message || err.message}`);

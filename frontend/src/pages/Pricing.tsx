@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { useNotification } from "../context/NotificationContext";
 
 declare global {
   interface Window {
@@ -19,6 +20,7 @@ const Pricing = () => {
   const [isPremium, setIsPremium] = useState(false);
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const { showNotification } = useNotification();
 
   // Load Razorpay script
   useEffect(() => {
@@ -72,7 +74,7 @@ const Pricing = () => {
     localStorage.removeItem("user_email");
     localStorage.removeItem("user_name");
     localStorage.removeItem("user_tier");
-    alert("Your session has expired. Please log in again to continue.");
+    showNotification("error", "Your session has expired. Please log in again to continue.", "Session Expired");
     navigate("/login");
   };
 
@@ -108,7 +110,7 @@ const Pricing = () => {
       }
 
       if (!scriptLoaded || !window.Razorpay) {
-        alert("Payment gateway is still loading. Please wait a moment.");
+        showNotification("info", "Payment gateway is still loading. Please wait a moment.");
         return;
       }
 
@@ -147,14 +149,18 @@ const Pricing = () => {
             setIsPremium(true);
             localStorage.setItem("user_tier", planName);
 
-            alert("🎉 Payment Successful! Your plan has been upgraded to " + planName.replace("_", " ") + ".");
-            navigate("/dashboard");
+            showNotification("payment_success", `Welcome to the ${planName.replace("_", " ")} Plan!`, "Payment Successful!");
+            
+            // Add a slight delay for celebration
+            setTimeout(() => {
+              navigate("/dashboard");
+            }, 2500);
           } catch (error: any) {
             console.error("Verification failed:", error);
             if (error.response) {
               console.error("Error Details:", error.response.data);
             }
-            alert("Verification failed but payment was made. Please check your Dashboard in a moment.");
+            showNotification("info", "Verification failed but payment was made. Please check your Dashboard in a moment.");
             navigate("/dashboard");
           } finally {
             setLoading(false);
@@ -188,7 +194,7 @@ const Pricing = () => {
 
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (response: any) {
-        alert("Payment Failed: " + response.error.description);
+        showNotification("error", response.error.description, "Payment Failed");
         setLoading(false);
       });
       rzp.open();
@@ -200,7 +206,7 @@ const Pricing = () => {
         return;
       }
       const errorMsg = error.response?.data?.message || error.response?.data || error.message;
-      alert(`Payment Initialization Failed: ${errorMsg}`);
+      showNotification("error", errorMsg, "System Error");
       setLoading(false);
     }
   };

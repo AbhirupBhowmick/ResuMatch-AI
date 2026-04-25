@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import ComparisonView from "../components/ComparisonView";
 import { useState } from "react";
 import axios from "axios";
+import { useNotification } from "../context/NotificationContext";
 
 interface Comparison {
   original: string;
@@ -31,10 +32,10 @@ export default function Results() {
 
   const token = localStorage.getItem("token");
 
+  const { showNotification } = useNotification();
+
   /* ── Apply Suggestions State Machine ── */
   const [applyState, setApplyState] = useState<"idle" | "loading" | "success">("idle");
-  const [showToast, setShowToast] = useState(false);
-  const [toastExiting, setToastExiting] = useState(false);
 
   /* ── Comparison Modal State ── */
   const [showComparison, setShowComparison] = useState(false);
@@ -91,11 +92,7 @@ export default function Results() {
     setIsConfirming(false);
     setShowComparison(false);
     
-    setShowToast(true);
-    setTimeout(() => {
-      setToastExiting(true);
-      setTimeout(() => { setShowToast(false); setToastExiting(false); }, 500);
-    }, 5000);
+    showNotification("success", "Your resume profile has been updated with the AI recommendations.", "Suggestions Applied");
   };
 
   const handleExportPDF = async () => {
@@ -133,7 +130,7 @@ export default function Results() {
     } catch (err) {
       console.error("Export failed:", err);
       // Fallback pdf download or alert
-      alert("Failed to export PDF. Ensure the backend endpoint is active.");
+      showNotification("error", "Failed to export PDF. Ensure the backend endpoint is active.", "PDF Error");
     } finally {
         if(btn) {
             btn.innerHTML = originalText;
@@ -370,25 +367,6 @@ export default function Results() {
         isLoading={applyState === "loading"}
       />
 
-      {showToast && (
-        <div className="fixed bottom-8 right-8 z-[100] pointer-events-auto">
-          <div className={`flex items-center gap-3 bg-surface-container-high border border-emerald-500/30 p-4 rounded-xl shadow-2xl transition-all duration-500 ease-out ${toastExiting ? 'translate-y-[10px] opacity-0' : 'translate-y-0 opacity-100'}`}>
-            <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <span className="material-symbols-outlined text-emerald-500 text-sm">check</span>
-            </div>
-            <div className="pr-4">
-              <p className="text-sm font-bold text-on-surface leading-tight">Success</p>
-              <p className="text-xs text-on-surface-variant">Your resume profile has been updated with the AI recommendations.</p>
-            </div>
-            <button 
-              className="text-on-surface-variant hover:text-on-surface ml-2 cursor-pointer"
-              onClick={() => { setToastExiting(true); setTimeout(() => { setShowToast(false); setToastExiting(false); }, 500); }}
-            >
-              <span className="material-symbols-outlined text-sm">close</span>
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

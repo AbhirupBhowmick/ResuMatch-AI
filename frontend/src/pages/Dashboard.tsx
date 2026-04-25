@@ -4,6 +4,7 @@ import axios from "axios";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import TierLimitModal from "../components/TierLimitModal";
+import { useNotification } from "../context/NotificationContext";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState(() => {
@@ -16,6 +17,7 @@ export default function Dashboard() {
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [limitMessage, setLimitMessage] = useState("");
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     localStorage.setItem("dashboard_view", activeTab);
@@ -92,9 +94,9 @@ export default function Dashboard() {
         setLimitMessage(errorData.message);
         setShowLimitModal(true);
       } else if (errorData?.message) {
-        alert(`Server Error: ${errorData.message}`);
+        showNotification("error", errorData.message, "Server Error");
       } else {
-        alert(`Analysis Failed: ${error.message}`);
+        showNotification("error", error.message, "Analysis Failed");
       }
     } finally {
       setLoading(false);
