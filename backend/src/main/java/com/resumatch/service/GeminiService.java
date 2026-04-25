@@ -69,11 +69,16 @@ public class GeminiService {
 
         try {
             String jsonText = callGemini(prompt, systemInstruction);
+            
+            if (jsonText.startsWith("ERROR_")) {
+                throw new RuntimeException(jsonText);
+            }
+
             String cleaned = extractJson(jsonText);
             if (cleaned != null) {
                 return objectMapper.readValue(cleaned, ResumeAnalysisResponse.class);
             }
-            throw new RuntimeException("AI response was not a valid JSON object.");
+            throw new RuntimeException("AI response was not a valid JSON object. Raw: " + (jsonText.length() > 50 ? jsonText.substring(0, 50) + "..." : jsonText));
         } catch (Exception e) {
             logger.error("Error calling Gemini API for analysis: {}", e.getMessage());
             throw new RuntimeException("AI analysis failed: " + e.getMessage());
@@ -226,6 +231,15 @@ public class GeminiService {
         genConfig.put("response_mime_type", "application/json");
         requestBody.put("generationConfig", genConfig);
 
+        // Safety Settings to prevent false positives
+        List<Map<String, Object>> safetySettings = List.of(
+            Map.of("category", "HARM_CATEGORY_HARASSMENT", "threshold", "BLOCK_NONE"),
+            Map.of("category", "HARM_CATEGORY_HATE_SPEECH", "threshold", "BLOCK_NONE"),
+            Map.of("category", "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold", "BLOCK_NONE"),
+            Map.of("category", "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold", "BLOCK_NONE")
+        );
+        requestBody.put("safetySettings", safetySettings);
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -234,24 +248,39 @@ public class GeminiService {
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
             Map<String, Object> body = response.getBody();
-            if (body != null && body.containsKey("candidates")) {
-                List<Map<String, Object>> candidates = (List<Map<String, Object>>) body.get("candidates");
-                if (!candidates.isEmpty()) {
-                    Map<String, Object> firstCandidate = candidates.get(0);
-                    if (firstCandidate.containsKey("content")) {
-                        Map<String, Object> content = (Map<String, Object>) firstCandidate.get("content");
-                        List<Map<String, Object>> responseParts = (List<Map<String, Object>>) content.get("parts");
-                        if (responseParts != null && !responseParts.isEmpty()) {
-                            return (String) responseParts.get(0).get("text");
+            if (body != null) {
+                if (body.containsKey("candidates")) {
+                    List<Map<String, Object>> candidates = (List<Map<String, Object>>) body.get("candidates");
+                    if (!candidates.isEmpty()) {
+                        Map<String, Object> firstCandidate = candidates.get(0);
+                        
+                        // Check for safety block
+                        if (firstCandidate.containsKey("finishReason") && "SAFETY".equals(firstCandidate.get("finishReason"))) {
+                           logger.error("Gemini response was blocked by safety filters.");
+                           return "ERROR_SAFETY_BLOCKED";
+                        }
+
+                        if (firstCandidate.containsKey("content")) {
+                            Map<String, Object> content = (Map<String, Object>) firstCandidate.get("content");
+                            List<Map<String, Object>> responseParts = (List<Map<String, Object>>) content.get("parts");
+                            if (responseParts != null && !responseParts.isEmpty()) {
+                                return (String) responseParts.get(0).get("text");
+                            }
                         }
                     }
                 }
+                if (body.containsKey("error")) {
+                    Map<String, Object> error = (Map<String, Object>) body.get("error");
+                    logger.error("Gemini API returned error: {}", error);
+                    return "ERROR_API_" + error.get("message");
+                }
             }
             logger.error("Empty or invalid response from Gemini: {}", body);
+            return "ERROR_EMPTY_RESPONSE";
         } catch (Exception e) {
             logger.error("Gemini API Call Failed: {}", e.getMessage());
+            return "ERROR_EXCEPTION_" + e.getMessage();
         }
-        return "";
     }
 
     private String extractJson(String raw) {
