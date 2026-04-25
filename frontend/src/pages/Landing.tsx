@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Features from "../components/Features";
+import HowItWorks from "../components/HowItWorks";
 
 const phrases = [
   "Land the Interview.",
@@ -108,7 +109,7 @@ export default function Landing() {
             ResuMatch AI
           </div>
           <div className="hidden md:flex items-center space-x-8">
-            <Link className="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors scale-95 duration-200" to="#">How it Works</Link>
+            <a className="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors scale-95 duration-200" href="#how-it-works">How it Works</a>
             <Link className="text-slate-400 hover:text-indigo-300 transition-colors scale-95 duration-200" to="/pricing">Pricing</Link>
             <a className="text-slate-400 hover:text-indigo-300 transition-colors scale-95 duration-200" href="#features">Features</a>
           </div>
@@ -161,6 +162,7 @@ export default function Landing() {
             </div>
           </div>
         </section>
+        <HowItWorks />
         <Features />
         {/* Editorial Section */}
         <section className="py-24 px-8 max-w-7xl mx-auto">
