@@ -37,7 +37,7 @@ function AuthWatcher() {
     }
 
     // 2. Track current path (ignore auth paths)
-    if (!["/", "/login", "/pricing"].includes(location.pathname)) {
+    if (!["/", "/login"].includes(location.pathname)) {
       localStorage.setItem("lastPath", location.pathname);
     }
   }, [location.search, navigate]);

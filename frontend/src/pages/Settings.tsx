@@ -260,14 +260,14 @@ export default function Settings() {
                     
                     <div className="flex gap-4">
                       <button 
-                        onClick={() => navigate("/pricing")}
+                        onClick={() => window.location.href = "/#pricing"}
                         className="bg-white text-[#11192e] px-6 py-2.5 rounded-full font-black text-xs hover:bg-[#dfe4fe] transition-all"
                       >
                         Compare Plans
                       </button>
                       {user.tier === 'FREE' && (
                         <button 
-                          onClick={() => navigate("/pricing")}
+                          onClick={() => window.location.href = "/#pricing"}
                           className="bg-primary/20 text-primary border border-primary/30 px-6 py-2.5 rounded-full font-black text-xs hover:bg-primary/30 transition-all"
                         >
                           Upgrade Now
