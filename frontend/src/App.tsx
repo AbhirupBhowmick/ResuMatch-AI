@@ -15,23 +15,23 @@ import Settings from "./pages/Settings";
 function AuthWatcher() {
   const location = useLocation();
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
 
   useEffect(() => {
-    // 1. Check for token in URL (from OAuth2 success redirect)
+    // 1. Capture and persist tokens IMMEDATELY
     const params = new URLSearchParams(location.search);
     const urlToken = params.get("token");
-    const urlName = params.get("name");
-    const urlEmail = params.get("email");
-    const urlTier = params.get("tier");
-
+    
     if (urlToken) {
       localStorage.setItem("token", urlToken);
+      const urlName = params.get("name");
+      const urlEmail = params.get("email");
+      const urlTier = params.get("tier");
+      
       if (urlName) localStorage.setItem("user_name", urlName);
       if (urlEmail) localStorage.setItem("user_email", urlEmail);
       if (urlTier) localStorage.setItem("user_tier", urlTier);
       
-      // Clean URL and navigate to dashboard
+      // Navigate to dashboard and strip params from URL
       navigate("/dashboard", { replace: true });
       return;
     }
@@ -40,13 +40,16 @@ function AuthWatcher() {
     if (!["/", "/login", "/pricing"].includes(location.pathname)) {
       localStorage.setItem("lastPath", location.pathname);
     }
+  }, [location.search, navigate]);
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
     // 3. Auto-login redirect if on landing/login with token
     if (token && ["/", "/login"].includes(location.pathname)) {
       const lastPath = localStorage.getItem("lastPath");
       navigate(lastPath || "/dashboard", { replace: true });
     }
-  }, [location, navigate, token]);
+  }, [location.pathname, navigate]);
 
   return null;
 }

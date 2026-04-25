@@ -29,8 +29,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 
 
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 
 @Configuration
@@ -44,17 +42,6 @@ public class WebSecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final PasswordEncoder passwordEncoder;
-    private final ClientRegistrationRepository clientRegistrationRepository;
-
-    @Bean
-    public OAuth2AuthorizationRequestResolver authorizationRequestResolver() {
-        DefaultOAuth2AuthorizationRequestResolver resolver = 
-            new DefaultOAuth2AuthorizationRequestResolver(clientRegistrationRepository, "/oauth2/authorization");
-        resolver.setAuthorizationRequestCustomizer(customizer -> {
-            customizer.additionalParameters(params -> params.put("prompt", "select_account"));
-        });
-        return resolver;
-    }
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
@@ -69,8 +56,6 @@ public class WebSecurityConfig {
         return authConfig.getAuthenticationManager();
     }
 
-
-
     /**
      * Keep health check bypass for diagnostics.
      */
@@ -80,7 +65,7 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, OAuth2AuthorizationRequestResolver authorizationRequestResolver) throws Exception {
         http
             .csrf(csrf -> csrf.disable()) // <--- THIS LINE IS CRITICAL
             .cors(org.springframework.security.config.Customizer.withDefaults())
@@ -96,7 +81,7 @@ public class WebSecurityConfig {
             )
             .oauth2Login(oauth2 -> oauth2
                 .authorizationEndpoint(authorization -> authorization
-                    .authorizationRequestResolver(authorizationRequestResolver())
+                    .authorizationRequestResolver(authorizationRequestResolver)
                 )
                 .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                 .successHandler(oAuth2SuccessHandler)
