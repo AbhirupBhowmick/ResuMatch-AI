@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import Features from "../components/Features";
 
 const phrases = [
   "Land the Interview.",
@@ -109,7 +110,7 @@ export default function Landing() {
           <div className="hidden md:flex items-center space-x-8">
             <Link className="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors scale-95 duration-200" to="#">How it Works</Link>
             <Link className="text-slate-400 hover:text-indigo-300 transition-colors scale-95 duration-200" to="/pricing">Pricing</Link>
-            <Link className="text-slate-400 hover:text-indigo-300 transition-colors scale-95 duration-200" to="#">Features</Link>
+            <a className="text-slate-400 hover:text-indigo-300 transition-colors scale-95 duration-200" href="#features">Features</a>
           </div>
           <div className="flex items-center space-x-6">
             <Link to={token ? "/dashboard" : "/login"} className="text-slate-400 hover:text-indigo-300 transition-colors text-sm font-medium">
@@ -160,38 +161,7 @@ export default function Landing() {
             </div>
           </div>
         </section>
-        {/* Features Grid */}
-        <section className="py-24 px-8 max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="group relative p-8 rounded-xl bg-surface-container-low backdrop-blur-md border border-outline-variant/10 transition-all duration-300 hover:bg-surface-container-high hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(79,70,229,0.15)] hover:border-primary/30">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-6 transition-transform group-hover:scale-110 group-hover:bg-primary/20">
-                <span className="material-symbols-outlined text-primary text-3xl transition-all" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400" }}>psychology</span>
-              </div>
-              <h3 className="text-2xl font-bold text-on-surface mb-4 font-headline">Deep AI Parsing</h3>
-              <p className="text-on-surface-variant font-body leading-relaxed">
-                We don't just scan words. Our neural engine understands context, seniority, and industry-specific nuance in your experience.
-              </p>
-            </div>
-            <div className="group relative p-8 rounded-xl bg-surface-container-low backdrop-blur-md border border-outline-variant/10 transition-all duration-300 hover:bg-surface-container-high hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(79,70,229,0.15)] hover:border-tertiary/30">
-              <div className="w-12 h-12 rounded-lg bg-tertiary/10 flex items-center justify-center mb-6 transition-transform group-hover:scale-110 group-hover:bg-tertiary/20">
-                <span className="material-symbols-outlined text-tertiary text-3xl transition-all" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400" }}>analytics</span>
-              </div>
-              <h3 className="text-2xl font-bold text-on-surface mb-4 font-headline">Instant ATS Scoring</h3>
-              <p className="text-on-surface-variant font-body leading-relaxed">
-                Know exactly how your resume ranks against common Applicant Tracking Systems with a detailed compatibility report.
-              </p>
-            </div>
-            <div className="group relative p-8 rounded-xl bg-surface-container-low backdrop-blur-md border border-outline-variant/10 transition-all duration-300 hover:bg-surface-container-high hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(79,70,229,0.15)] hover:border-secondary/30">
-              <div className="w-12 h-12 rounded-lg bg-secondary-container/20 flex items-center justify-center mb-6 transition-transform group-hover:scale-110 group-hover:bg-secondary-container/30">
-                <span className="material-symbols-outlined text-secondary-dim text-3xl transition-all" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400" }}>forum</span>
-              </div>
-              <h3 className="text-2xl font-bold text-on-surface mb-4 font-headline">Smart Interview Prep</h3>
-              <p className="text-on-surface-variant font-body leading-relaxed">
-                Generate tailored interview questions based directly on the identified gaps in your resume and target job descriptions.
-              </p>
-            </div>
-          </div>
-        </section>
+        <Features />
         {/* Editorial Section */}
         <section className="py-24 px-8 max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row gap-16 items-center">
