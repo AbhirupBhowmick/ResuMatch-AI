@@ -24,9 +24,18 @@ public class JwtUtils {
     private int jwtExpirationMs;
 
     public String generateJwtToken(Authentication authentication) {
-        UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
+        String username;
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+            username = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+        } else if (principal instanceof org.springframework.security.oauth2.core.user.OAuth2User) {
+            username = ((org.springframework.security.oauth2.core.user.OAuth2User) principal).getAttribute("email");
+        } else {
+            username = principal.toString();
+        }
+
         return JWT.create()
-                .withSubject((userPrincipal.getUsername())) // Note: using email as username
+                .withSubject(username)
                 .withIssuedAt(new Date())
                 .withExpiresAt(new Date((new Date()).getTime() + jwtExpirationMs))
                 .sign(Algorithm.HMAC512(jwtSecret));

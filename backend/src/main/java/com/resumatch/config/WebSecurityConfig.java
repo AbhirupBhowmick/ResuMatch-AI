@@ -1,5 +1,7 @@
 package com.resumatch.config;
 
+import com.resumatch.security.CustomOAuth2UserService;
+import com.resumatch.security.OAuth2SuccessHandler;
 import com.resumatch.security.JwtAuthFilter;
 import com.resumatch.security.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +14,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,6 +37,8 @@ public class WebSecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtAuthFilter jwtAuthFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
@@ -68,7 +72,7 @@ public class WebSecurityConfig {
             .csrf(csrf -> csrf.disable()) // <--- THIS LINE IS CRITICAL
             .cors(org.springframework.security.config.Customizer.withDefaults())
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler()))
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/oauth2/**", "/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/health").permitAll()
@@ -78,7 +82,8 @@ public class WebSecurityConfig {
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
-                .defaultSuccessUrl("https://resu-match-ai-eight.vercel.app/dashboard", true)
+                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                .successHandler(oAuth2SuccessHandler)
             );
 
         http.authenticationProvider(authenticationProvider());

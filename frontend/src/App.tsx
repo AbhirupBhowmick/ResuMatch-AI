@@ -18,12 +18,30 @@ function AuthWatcher() {
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    // 1. Track current path (ignore auth paths)
+    // 1. Check for token in URL (from OAuth2 success redirect)
+    const params = new URLSearchParams(location.search);
+    const urlToken = params.get("token");
+    const urlName = params.get("name");
+    const urlEmail = params.get("email");
+    const urlTier = params.get("tier");
+
+    if (urlToken) {
+      localStorage.setItem("token", urlToken);
+      if (urlName) localStorage.setItem("user_name", urlName);
+      if (urlEmail) localStorage.setItem("user_email", urlEmail);
+      if (urlTier) localStorage.setItem("user_tier", urlTier);
+      
+      // Clean URL and navigate to dashboard
+      navigate("/dashboard", { replace: true });
+      return;
+    }
+
+    // 2. Track current path (ignore auth paths)
     if (!["/", "/login", "/pricing"].includes(location.pathname)) {
       localStorage.setItem("lastPath", location.pathname);
     }
 
-    // 2. Auto-login redirect if on landing/login with token
+    // 3. Auto-login redirect if on landing/login with token
     if (token && ["/", "/login"].includes(location.pathname)) {
       const lastPath = localStorage.getItem("lastPath");
       navigate(lastPath || "/dashboard", { replace: true });
