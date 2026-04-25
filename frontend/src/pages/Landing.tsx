@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Features from "../components/Features";
 import HowItWorks from "../components/HowItWorks";
+import Pricing from "./Pricing";
 
 const phrases = [
   "Land the Interview.",
@@ -110,7 +111,7 @@ export default function Landing() {
           </div>
           <div className="hidden md:flex items-center space-x-8">
             <a className="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors scale-95 duration-200" href="#how-it-works">How it Works</a>
-            <Link className="text-slate-400 hover:text-indigo-300 transition-colors scale-95 duration-200" to="/pricing">Pricing</Link>
+            <a className="text-slate-400 hover:text-indigo-300 transition-colors scale-95 duration-200" href="#pricing">Pricing</a>
             <a className="text-slate-400 hover:text-indigo-300 transition-colors scale-95 duration-200" href="#features">Features</a>
           </div>
           <div className="flex items-center space-x-6">
@@ -210,6 +211,7 @@ export default function Landing() {
             </div>
           </div>
         </section>
+        <Pricing />
       </main>
       {/* Footer */}
       <footer className="bg-slate-950 w-full py-12">

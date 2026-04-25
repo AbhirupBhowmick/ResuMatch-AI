@@ -8,7 +8,7 @@ import Results from "./pages/Results";
 import InterviewPrep from "./pages/InterviewPrep";
 import Assessment from "./pages/Assessment";
 import AssessmentResult from "./pages/AssessmentResult";
-import Pricing from "./pages/Pricing";
+
 import CoverLetter from "./pages/CoverLetter";
 import Settings from "./pages/Settings";
 
@@ -75,7 +75,6 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Landing />} />
-          <Route path="/pricing" element={<Pricing />} />
           <Route path="/login" element={<Login />} />
           
           {/* Protected Routes */}
