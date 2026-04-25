@@ -332,13 +332,13 @@ const PricingCard = ({ name, price, features, onBuy, buttonConfig, recommended, 
 }) => {
   const cardContent = (
     <div className={`bg-surface-container-low rounded-xl p-8 flex flex-col h-full relative ${recommended ? 'z-10' : 'border-t border-outline-variant/20'}`}>
-      <div className="flex justify-between items-center mb-4 min-h-[32px]">
-        <h3 className={`font-headline text-xl font-semibold ${recommended ? 'text-primary' : 'text-on-surface'}`}>{name}</h3>
+      <div className="flex justify-between items-start mb-4 h-[60px]">
+        <h3 className={`font-headline text-lg xl:text-xl font-bold leading-tight pr-2 ${recommended ? 'text-primary' : 'text-on-surface'}`}>{name}</h3>
         {isCurrentTier && (
-          <span className="inline-flex items-center px-2 py-1 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-wider">Your Plan</span>
+          <span className="inline-flex items-center px-2 py-1 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-widest whitespace-nowrap shrink-0">Your Plan</span>
         )}
         {!isCurrentTier && recommended && (
-          <span className="inline-flex items-center px-2 py-1 rounded bg-primary-dim/20 text-primary-dim text-xs font-bold uppercase tracking-wider">Most Popular</span>
+          <span className="inline-flex items-center px-2 py-1 rounded bg-primary-dim/20 text-primary-dim text-[10px] font-black uppercase tracking-widest whitespace-nowrap shrink-0">Most Popular</span>
         )}
       </div>
       <div className="mb-6">
