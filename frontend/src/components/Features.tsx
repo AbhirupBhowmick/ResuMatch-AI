@@ -1,6 +1,6 @@
 export default function Features() {
   return (
-    <section className="py-24 px-8 max-w-7xl mx-auto opacity-0 animate-fade-in-up" id="features">
+    <section className="py-24 px-8 max-w-7xl mx-auto relative z-20" id="features">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Hero Card (Spans 2 columns on lg) */}
         <div className="bento-card group p-8 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 transition-transform duration-300 hover:scale-[1.02] md:col-span-2 lg:col-span-2 row-span-2 flex flex-col justify-end min-h-[320px] relative overflow-hidden bg-gradient-to-br from-surface-container to-surface-container-low">
