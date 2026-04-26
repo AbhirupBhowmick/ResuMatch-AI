@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Features from "../components/Features";
 import HowItWorks from "../components/HowItWorks";
 import Pricing from "./Pricing";
+import VideoModal from "../components/VideoModal";
 
 const phrases = [
   "Land the Interview.",
@@ -56,6 +57,7 @@ export default function Landing() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [typingSpeed, setTypingSpeed] = useState(100);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isDemoOpen, setIsDemoOpen] = useState(false);
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -145,7 +147,7 @@ export default function Landing() {
               <Link to={token ? "/dashboard" : "/login"} className="group relative px-8 py-4 bg-indigo-600 rounded-xl font-bold text-on-surface overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(78,69,228,0.3)]">
                 <span className="relative z-10">{token ? "Go to Dashboard" : "Analyze Resume for Free"}</span>
               </Link>
-              <button className="px-8 py-4 rounded-xl border border-outline-variant/30 text-on-surface font-semibold hover:bg-surface-container-high transition-colors">
+              <button onClick={() => setIsDemoOpen(true)} className="px-8 py-4 rounded-xl border border-outline-variant/30 text-on-surface font-semibold hover:bg-surface-container-high transition-colors">
                 View Demo
               </button>
             </div>
@@ -229,6 +231,7 @@ export default function Landing() {
         </div>
       </footer>
       </div>
+      <VideoModal isOpen={isDemoOpen} onClose={() => setIsDemoOpen(false)} />
     </div>
   );
 }
