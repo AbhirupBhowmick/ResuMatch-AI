@@ -1,4 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import LogoutModal from "./LogoutModal";
 
 interface SidebarProps {
   activeTab?: string;
@@ -7,6 +9,7 @@ interface SidebarProps {
 
 export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const navigate = useNavigate();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const handleDashboardClick = () => {
     if (setActiveTab) {
@@ -76,7 +79,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
           <span className="ml-auto text-[8px] font-black uppercase tracking-widest bg-primary/20 text-primary px-2 py-0.5 rounded-full">Pro</span>
         </Link>
         <button 
-          onClick={handleLogout} 
+          onClick={() => setIsLogoutModalOpen(true)} 
           className="flex w-full items-center gap-3 px-4 py-3 text-[#dfe4fe]/60 hover:text-[#dfe4fe] hover:bg-[#171f36] transition-all rounded-lg cursor-pointer"
         >
           <span className="material-symbols-outlined">logout</span>
@@ -101,6 +104,12 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
           New Audit
         </button>
       </div>
+
+      <LogoutModal 
+        isOpen={isLogoutModalOpen} 
+        onConfirm={handleLogout} 
+        onCancel={() => setIsLogoutModalOpen(false)} 
+      />
     </nav>
   );
 }
