@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useNotification } from "../context/NotificationContext";
-import Sidebar from "../components/Sidebar";
-import Header from "../components/Header";
 
 declare global {
   interface Window {
@@ -214,27 +212,39 @@ const Pricing = () => {
   };
 
   return (
-    <div className="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary-container min-h-screen font-body flex">
-      <Sidebar />
-      <div className="flex-1 lg:ml-64 flex flex-col relative">
-        <Header title="Upgrade Plan" />
-        <main className="pt-24 px-8 pb-12 min-h-screen w-full">
-            <section id="pricing" className="py-12 relative overflow-hidden font-body bg-transparent w-full">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary-dim/15 via-background to-background pointer-events-none"></div>
-              
-              <div className="max-w-7xl mx-auto px-4 relative z-10">
-                <div className="text-center mb-16">
-                  <h1 className="text-4xl md:text-5xl font-headline font-extrabold tracking-tight text-on-surface mb-4">Simple, transparent pricing</h1>
-                  <p className="text-base font-body text-on-surface-variant max-w-2xl mx-auto">Elevate your professional narrative with our curated AI tools. Choose the plan that fits your career trajectory.</p>
-                  {isPremium && (
-                    <div className="mt-6 inline-flex items-center gap-2 bg-primary/10 border border-primary/30 px-5 py-2 rounded-full">
-                      <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
-                      <span className="text-sm font-bold text-primary">
-                        You are on the <span className="uppercase">{currentTier.replace("_", " ")}</span> plan
-                      </span>
-                    </div>
-                  )}
+    <div className="bg-[#030712] text-on-surface selection:bg-primary-container selection:text-on-primary-container min-h-screen font-body relative flex flex-col">
+      {/* Standalone Navigation Bar */}
+      <div className="w-full px-8 py-6 flex justify-between items-center z-20 relative border-b border-outline-variant/10 bg-[#030712]/50 backdrop-blur-md">
+        <div className="text-xl font-black font-headline text-[#dfe4fe] tracking-tighter flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary">diamond</span>
+            ResuMatch Premium
+        </div>
+        <button 
+          onClick={() => navigate("/dashboard")}
+          className="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-bold text-sm rounded-xl transition-colors border border-outline-variant/20"
+        >
+          <span className="material-symbols-outlined text-lg">arrow_back</span>
+          Go to Dashboard
+        </button>
+      </div>
+
+      <main className="flex-1 w-full relative">
+        <section id="pricing" className="py-16 relative overflow-hidden font-body bg-transparent w-full">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary-dim/15 via-background to-background pointer-events-none"></div>
+          
+          <div className="max-w-7xl mx-auto px-4 relative z-10">
+            <div className="text-center mb-16">
+              <h1 className="text-4xl md:text-5xl font-headline font-extrabold tracking-tight text-on-surface mb-4">Simple, transparent pricing</h1>
+              <p className="text-base font-body text-on-surface-variant max-w-2xl mx-auto">Elevate your professional narrative with our curated AI tools. Choose the plan that fits your career trajectory.</p>
+              {isPremium && (
+                <div className="mt-6 inline-flex items-center gap-2 bg-primary/10 border border-primary/30 px-5 py-2 rounded-full">
+                  <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
+                  <span className="text-sm font-bold text-primary">
+                    You are on the <span className="uppercase">{currentTier.replace("_", " ")}</span> plan
+                  </span>
                 </div>
+              )}
+            </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
                   {/* FREE TIER */}
@@ -318,8 +328,7 @@ const Pricing = () => {
                 )}
               </div>
             </section>
-        </main>
-      </div>
+      </main>
     </div>
   );
 };
