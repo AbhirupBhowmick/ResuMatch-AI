@@ -17,6 +17,8 @@ import java.util.Map;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    @org.springframework.beans.factory.annotation.Value("${razorpay.keyId}")
+    private String keyId;
 
     @PostMapping("/create-order")
     public ResponseEntity<?> createOrder(@RequestBody Map<String, Object> data) {
@@ -36,6 +38,7 @@ public class PaymentController {
             response.put("orderId", order.get("id"));
             response.put("amount", order.get("amount")); 
             response.put("currency", order.get("currency"));
+            response.put("key", keyId);
 
             log.info("Razorpay Order Created: {}", (Object) order.get("id"));
             return ResponseEntity.ok(response);

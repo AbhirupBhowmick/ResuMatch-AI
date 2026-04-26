@@ -40,8 +40,7 @@ public class PaymentService {
         orderRequest.put("currency", "INR");
         orderRequest.put("receipt", "receipt_" + System.currentTimeMillis());
         
-        // Explicitly set payment_capture to 1 for immediate capture
-        orderRequest.put("payment_capture", 1);
+        // payment_capture deprecated in modern SDK and dashboard options
         
         JSONObject notes = new JSONObject();
         notes.put("planId", planId);

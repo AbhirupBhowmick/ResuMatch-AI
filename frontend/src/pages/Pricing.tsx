@@ -126,7 +126,7 @@ const Pricing = () => {
       const orderData = response.data;
 
       const options = {
-        key: "rzp_test_SbLtEkEnC0pYEr",
+        key: orderData.key || "rzp_test_SbLtEkEnC0pYEr",
         amount: orderData.amount,
         currency: orderData.currency,
         name: "ResuMatch AI",
