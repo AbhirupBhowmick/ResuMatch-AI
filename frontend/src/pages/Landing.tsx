@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Features from "../components/Features";
 import HowItWorks from "../components/HowItWorks";
-import Pricing from "./Pricing";
+
 import VideoModal from "../components/VideoModal";
 
 const phrases = [
@@ -213,7 +213,6 @@ export default function Landing() {
             </div>
           </div>
         </section>
-        <Pricing />
       </main>
       {/* Footer */}
       <footer className="bg-slate-950 w-full py-12">

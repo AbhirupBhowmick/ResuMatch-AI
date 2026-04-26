@@ -59,7 +59,7 @@ export default function InterviewPrep() {
       const errorData = err.response?.data;
       if (errorData?.status === "UPGRADE_REQUIRED") {
         showNotification("error", errorData.message, "Upgrade Required");
-        window.location.href = "/#pricing";
+        navigate("/pricing");
       } else {
         setErrorMsg(`Failed to generate: ${errorData?.message || err.message}`);
       }
@@ -83,7 +83,7 @@ export default function InterviewPrep() {
       const errorData = err.response?.data;
       if (errorData?.status === "UPGRADE_REQUIRED") {
         showNotification("error", errorData.message, "Upgrade Required");
-        window.location.href = "/#pricing";
+        navigate("/pricing");
       } else {
         setErrorMsg(`MCQ Error: ${errorData?.message || err.message}`);
       }

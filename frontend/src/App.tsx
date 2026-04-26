@@ -11,6 +11,7 @@ import AssessmentResult from "./pages/AssessmentResult";
 
 import CoverLetter from "./pages/CoverLetter";
 import Settings from "./pages/Settings";
+import Pricing from "./pages/Pricing";
 
 function AuthWatcher() {
   const location = useLocation();
@@ -86,6 +87,7 @@ function App() {
           <Route path="/assessment-result" element={<ProtectedRoute><AssessmentResult /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/cover-letter" element={<ProtectedRoute><CoverLetter /></ProtectedRoute>} />
+          <Route path="/pricing" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </div>

@@ -280,7 +280,7 @@ export default function Dashboard() {
               <h3 className="text-lg font-bold font-headline text-on-surface mb-2">Pro Subscription</h3>
               <p className="text-sm text-on-surface-variant">Unlock unlimited audits, deep-dive interview simulations, and direct export to LinkedIn format.</p>
             </div>
-            <button onClick={() => window.location.href = "/#pricing"} className="mt-8 w-full border-2 border-primary text-primary py-3 rounded-xl font-bold text-sm hover:bg-primary hover:text-on-primary transition-all cursor-pointer">Upgrade Now</button>
+            <button onClick={() => navigate("/pricing")} className="mt-8 w-full border-2 border-primary text-primary py-3 rounded-xl font-bold text-sm hover:bg-primary hover:text-on-primary transition-all cursor-pointer">Upgrade Now</button>
           </div>
         </section>
 

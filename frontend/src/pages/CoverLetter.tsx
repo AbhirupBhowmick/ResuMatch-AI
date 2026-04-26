@@ -251,7 +251,7 @@ const CoverLetter = () => {
                   <p className="text-xs text-on-surface-variant">Unlock custom tones, character limits, and more.</p>
                 </div>
                 <button
-                  onClick={() => window.location.href = "/#pricing"}
+                  onClick={() => navigate("/pricing")}
                   className="px-6 py-2 bg-primary/20 text-primary border border-primary/30 rounded-full font-headline font-bold text-sm hover:bg-primary/30 transition-all cursor-pointer"
                 >
                   Upgrade to Pro
