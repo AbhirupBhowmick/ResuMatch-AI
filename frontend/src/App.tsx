@@ -46,15 +46,10 @@ function AuthWatcher() {
     const token = localStorage.getItem("token");
     // 3. Auto-login redirect if on landing/login with token
     if (token && ["/", "/login"].includes(location.pathname)) {
-      // Allow authenticated users to view landing page sections like Pricing if they use a hash anchor
-      if (location.pathname === "/" && location.hash) {
-        return;
-      }
-      // Alternatively, maybe they just want the landing page to be a public marketing site, but let's allow it if there is a hash.
       const lastPath = localStorage.getItem("lastPath");
       navigate(lastPath || "/dashboard", { replace: true });
     }
-  }, [location.pathname, location.hash, navigate]);
+  }, [location.pathname, navigate]);
 
   return null;
 }

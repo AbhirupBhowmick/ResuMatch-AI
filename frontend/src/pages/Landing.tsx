@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Features from "../components/Features";
 import HowItWorks from "../components/HowItWorks";
@@ -59,18 +59,6 @@ export default function Landing() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isDemoOpen, setIsDemoOpen] = useState(false);
   const token = localStorage.getItem("token");
-  const { hash } = useLocation();
-
-  useEffect(() => {
-    if (hash) {
-      setTimeout(() => {
-        const element = document.querySelector(hash);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth" });
-        }
-      }, 100);
-    }
-  }, [hash]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
