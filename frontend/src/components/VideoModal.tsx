@@ -82,7 +82,7 @@ export default function VideoModal({ isOpen, onClose }: VideoModalProps) {
         <div className="w-full h-full relative">
           <video 
             ref={videoRef}
-            src="https://www.w3schools.com/html/mov_bbb.mp4" 
+            src="/Video.MP4" 
             className="w-full h-full object-cover"
             autoPlay
             muted
