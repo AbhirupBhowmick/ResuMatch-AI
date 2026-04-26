@@ -63,6 +63,39 @@ public class ResumeController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/tailor")
+    public ResponseEntity<?> jobTailorXRay(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("jobDescription") String jobDescription) {
+        log.info("Receiving Job Tailor X-Ray request");
+        try {
+            // 0. Get User and Validate Limits
+            User user = userService.getCurrentUser();
+            subscriptionValidationService.validateAuditLimit(user);
+
+            // 1. Parse Resume
+            String parsedText = resumeService.parseResume(file);
+            
+            // 2. Call Gemini for X-Ray
+            java.util.Map<String, Object> response = geminiService.analyzeJobTailor(parsedText, jobDescription);
+            
+            if (response.containsKey("error")) {
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // 3. Update Usage (optional for X-Ray, but good practice since uses Gemini)
+            userService.incrementAuditCount(user);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Job tailor process failed", e);
+            if (e.getMessage() != null && e.getMessage().contains("Insufficient credits")) {
+                return ResponseEntity.status(403).body(java.util.Map.of("error", e.getMessage()));
+            }
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        }
+    }
+
     /**
      * Export the current resume as a professional PDF.
      * Synchronizes content if suggestions have been applied.

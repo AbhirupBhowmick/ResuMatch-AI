@@ -2,6 +2,7 @@ import { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
 
 export default function JobTailor() {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -15,34 +16,56 @@ export default function JobTailor() {
     suggestion: { original: string; optimized: string; } | null;
   } | null>(null);
 
-  const handleStartScan = () => {
+  const handleStartScan = async () => {
     setScanStatus('validating');
     setErrorStatus("");
 
-    // Simulate validation
-    setTimeout(() => {
-      if (!resumeFile || jobDescription.trim().length < 10) {
-        setErrorStatus("Invalid Document Type Detected. Please provide a valid Job Description and Resume.");
+    if (!resumeFile || jobDescription.trim().length < 10) {
+      setErrorStatus("Please provide a valid Job Description and Resume.");
+      setScanStatus('idle');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("file", resumeFile);
+      formData.append("jobDescription", jobDescription);
+
+      // The backend does validating -> parsing -> scanning in one go.
+      // But we visually simulate the two steps if we want, or just set to scanning.
+      setScanStatus('scanning');
+
+      const token = localStorage.getItem("token");
+      const response = await axios.post("/api/v1/resume/tailor", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (response.data.error) {
+        setErrorStatus(response.data.error);
         setScanStatus('idle');
         return;
       }
 
-      setScanStatus('scanning');
+      setResults({
+        score: response.data.score || 0,
+        missingKeywords: response.data.missingKeywords || [],
+        weakKeywords: response.data.weakKeywords || [],
+        suggestion: response.data.suggestion || null
+      });
 
-      // Simulate deep AI analysis
-      setTimeout(() => {
-        setResults({
-          score: 85,
-          missingKeywords: ["Design Systems", "Figma Auto Layout"],
-          weakKeywords: ["Agile Methodology", "User Testing"],
-          suggestion: {
-            original: "Created mockups and wireframes for the new mobile app.",
-            optimized: "Spearheaded the creation of scalable mockups and wireframes for the mobile application utilizing Figma Auto Layout, establishing foundational elements for a new Design System."
-          }
-        });
-        setScanStatus('complete');
-      }, 4000);
-    }, 1000);
+      setScanStatus('complete');
+    } catch (err: any) {
+      console.error(err);
+      if (err.response?.status === 403 && err.response?.data?.error?.includes("Insufficient credits")) {
+         setErrorStatus("Insufficient AI credits. Please upgrade your plan.");
+      } else {
+         setErrorStatus(err.response?.data?.error || "AI Scanning failed. Please try again or ensure your documents are valid text formats.");
+      }
+      setScanStatus('idle');
+    }
   };
 
   return (

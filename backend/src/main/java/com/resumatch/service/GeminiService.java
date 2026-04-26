@@ -203,6 +203,37 @@ public class GeminiService {
         }
     }
 
+    // ===== F. JOB TAILOR X-RAY IN-DEPTH SCAN =====
+
+    public Map<String, Object> analyzeJobTailor(String resumeText, String jobDescriptionText) {
+        String systemInstruction = "You are an elite AI Recruiter ATS auditor. You must first STRICTLY validate if the inputs are actual resumes and job descriptions. Return ONLY valid JSON.";
+
+        String prompt = "Resume Input:\n" + resumeText + "\n\nJob Description Input:\n" + jobDescriptionText + 
+                "\n\nFirst, check if 'Resume Input' looks like a resume/CV and 'Job Description Input' looks like a Job Description. If they do not (e.g. they are homework assignments, random code, generic text, or completely unrelated), return exactly: { \"error\": \"Invalid Document Type Detected. Please provide a valid Job Description and Resume.\" }\n\n" +
+                "If they are valid, perform an X-Ray Scan to match them. Return JSON:\n" +
+                "{\n" +
+                "  \"score\": integer (0-100),\n" +
+                "  \"missingKeywords\": [\"keyword1\", \"keyword2\"],\n" +
+                "  \"weakKeywords\": [\"keyword3\"],\n" +
+                "  \"suggestion\": {\n" +
+                "    \"original\": \"Original bullet point from resume\",\n" +
+                "    \"optimized\": \"Optimized bullet point incorporating missing keywords utilizing STAR format\"\n" +
+                "  }\n" +
+                "}";
+
+        try {
+            String raw = callGemini(prompt, systemInstruction);
+            String cleaned = extractJson(raw);
+            if (cleaned != null) {
+                return objectMapper.readValue(cleaned, new TypeReference<Map<String, Object>>() {});
+            }
+            throw new RuntimeException("AI response for Job Tailor was invalid.");
+        } catch (Exception e) {
+            logger.error("Job Tailor validation/scan failed: {}", e.getMessage());
+            throw new RuntimeException("Job Tailor AI failed: " + e.getMessage());
+        }
+    }
+
     // ===== INTERNAL HELPERS =====
 
     private String callGemini(String prompt, String systemInstruction) {
