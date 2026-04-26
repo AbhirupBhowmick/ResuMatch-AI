@@ -71,6 +71,13 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
           <span className="text-sm">Interview Prep</span>
         </Link>
         <Link 
+          className={`flex items-center gap-3 px-4 py-3 transition-all rounded-lg cursor-pointer ${window.location.pathname === "/job-tailor" ? "text-[#4F46E5] font-bold bg-[#171f36]/40 border-r-2 border-[#4F46E5]" : "text-[#dfe4fe]/60 hover:text-[#dfe4fe] hover:bg-[#171f36]"}`} 
+          to="/job-tailor"
+        >
+          <span className="material-symbols-outlined">description</span>
+          <span className="text-sm">Job Tailor</span>
+        </Link>
+        <Link 
           className={`flex items-center gap-3 px-4 py-3 transition-all rounded-lg cursor-pointer ${window.location.pathname === "/cover-letter" ? "text-[#4F46E5] font-bold bg-[#171f36]/40 border-r-2 border-[#4F46E5]" : "text-[#dfe4fe]/60 hover:text-[#dfe4fe] hover:bg-[#171f36]"}`} 
           to="/cover-letter"
         >

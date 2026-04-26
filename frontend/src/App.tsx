@@ -11,6 +11,7 @@ import AssessmentResult from "./pages/AssessmentResult";
 
 import CoverLetter from "./pages/CoverLetter";
 import Settings from "./pages/Settings";
+import JobTailor from "./pages/JobTailor";
 import Pricing from "./pages/Pricing";
 
 function AuthWatcher() {
@@ -86,6 +87,7 @@ function App() {
           <Route path="/assessment" element={<ProtectedRoute><Assessment /></ProtectedRoute>} />
           <Route path="/assessment-result" element={<ProtectedRoute><AssessmentResult /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/job-tailor" element={<ProtectedRoute><JobTailor /></ProtectedRoute>} />
           <Route path="/cover-letter" element={<ProtectedRoute><CoverLetter /></ProtectedRoute>} />
           <Route path="/pricing" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
         </Routes>
