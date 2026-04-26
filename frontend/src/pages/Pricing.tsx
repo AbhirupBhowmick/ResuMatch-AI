@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useNotification } from "../context/NotificationContext";
+import Sidebar from "../components/Sidebar";
+import Header from "../components/Header";
 
 declare global {
   interface Window {
@@ -212,105 +214,113 @@ const Pricing = () => {
   };
 
   return (
-    <section id="pricing" className="py-32 relative overflow-hidden font-body bg-transparent">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary-dim/15 via-background to-background pointer-events-none"></div>
-      
-      <div className="max-w-7xl mx-auto px-8 relative z-10">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-headline font-extrabold tracking-tight text-on-surface mb-6">Simple, transparent pricing</h1>
-          <p className="text-lg font-body text-on-surface-variant max-w-2xl mx-auto">Elevate your professional narrative with our curated AI tools. Choose the plan that fits your career trajectory.</p>
-          {isPremium && (
-            <div className="mt-6 inline-flex items-center gap-2 bg-primary/10 border border-primary/30 px-5 py-2 rounded-full">
-              <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
-              <span className="text-sm font-bold text-primary">
-                You are on the <span className="uppercase">{currentTier.replace("_", " ")}</span> plan
-              </span>
-            </div>
-          )}
-        </div>
+    <div className="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary-container min-h-screen font-body flex">
+      <Sidebar />
+      <div className="flex-1 lg:ml-64 flex flex-col relative">
+        <Header title="Upgrade Plan" />
+        <main className="pt-24 px-8 pb-12 min-h-screen w-full">
+            <section id="pricing" className="py-12 relative overflow-hidden font-body bg-transparent w-full">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary-dim/15 via-background to-background pointer-events-none"></div>
+              
+              <div className="max-w-7xl mx-auto px-4 relative z-10">
+                <div className="text-center mb-16">
+                  <h1 className="text-4xl md:text-5xl font-headline font-extrabold tracking-tight text-on-surface mb-4">Simple, transparent pricing</h1>
+                  <p className="text-base font-body text-on-surface-variant max-w-2xl mx-auto">Elevate your professional narrative with our curated AI tools. Choose the plan that fits your career trajectory.</p>
+                  {isPremium && (
+                    <div className="mt-6 inline-flex items-center gap-2 bg-primary/10 border border-primary/30 px-5 py-2 rounded-full">
+                      <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
+                      <span className="text-sm font-bold text-primary">
+                        You are on the <span className="uppercase">{currentTier.replace("_", " ")}</span> plan
+                      </span>
+                    </div>
+                  )}
+                </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
-          {/* FREE TIER */}
-          <PricingCard 
-            name="Free"
-            tierKey="FREE"
-            price="0"
-            features={[
-              { text: "1 Resume Audit", included: true },
-              { text: "Basic ATS Score", included: true },
-              { text: "Top 3 Suggestions", included: true },
-              { text: "Export to PDF", included: false }
-            ]}
-            buttonConfig={getButtonConfig("FREE", "Current Plan")}
-            onBuy={() => navigate("/dashboard")}
-            isCurrentTier={isCurrentTier("FREE")}
-          />
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
+                  {/* FREE TIER */}
+                  <PricingCard 
+                    name="Free"
+                    tierKey="FREE"
+                    price="0"
+                    features={[
+                      { text: "1 Resume Audit", included: true },
+                      { text: "Basic ATS Score", included: true },
+                      { text: "Top 3 Suggestions", included: true },
+                      { text: "Export to PDF", included: false }
+                    ]}
+                    buttonConfig={getButtonConfig("FREE", "Current Plan")}
+                    onBuy={() => navigate("/dashboard")}
+                    isCurrentTier={isCurrentTier("FREE")}
+                  />
 
-          {/* STARTER TIER */}
-          <PricingCard 
-            name="Starter"
-            tierKey="STARTER"
-            price="19"
-            features={[
-              { text: "5 Deep-Dive Audits", included: true },
-              { text: "Keyword optimization", included: true },
-              { text: "ATS compatibility score", included: true },
-              { text: "Email support", included: true }
-            ]}
-            buttonConfig={getButtonConfig("STARTER", "Buy Starter")}
-            onBuy={() => handlePayment(19, "STARTER")}
-            isCurrentTier={isCurrentTier("STARTER")}
-          />
+                  {/* STARTER TIER */}
+                  <PricingCard 
+                    name="Starter"
+                    tierKey="STARTER"
+                    price="19"
+                    features={[
+                      { text: "5 Deep-Dive Audits", included: true },
+                      { text: "Keyword optimization", included: true },
+                      { text: "ATS compatibility score", included: true },
+                      { text: "Email support", included: true }
+                    ]}
+                    buttonConfig={getButtonConfig("STARTER", "Buy Starter")}
+                    onBuy={() => handlePayment(19, "STARTER")}
+                    isCurrentTier={isCurrentTier("STARTER")}
+                  />
 
-          {/* ACTIVE_HUNTER TIER */}
-          <PricingCard 
-            name="Active Hunter"
-            tierKey="ACTIVE_HUNTER"
-            price="59"
-            recommended
-            features={[
-              { text: "Unlimited Resume Audits", included: true },
-              { text: "Cover Letter Generator", included: true },
-              { text: "LinkedIn Profile Analysis", included: true },
-              { text: "Priority Support", included: true }
-            ]}
-            buttonConfig={getButtonConfig("ACTIVE_HUNTER", "Upgrade Now")}
-            onBuy={() => handlePayment(59, "ACTIVE_HUNTER")}
-            isCurrentTier={isCurrentTier("ACTIVE_HUNTER")}
-          />
+                  {/* ACTIVE_HUNTER TIER */}
+                  <PricingCard 
+                    name="Active Hunter"
+                    tierKey="ACTIVE_HUNTER"
+                    price="59"
+                    recommended
+                    features={[
+                      { text: "Unlimited Resume Audits", included: true },
+                      { text: "Cover Letter Generator", included: true },
+                      { text: "LinkedIn Profile Analysis", included: true },
+                      { text: "Priority Support", included: true }
+                    ]}
+                    buttonConfig={getButtonConfig("ACTIVE_HUNTER", "Upgrade Now")}
+                    onBuy={() => handlePayment(59, "ACTIVE_HUNTER")}
+                    isCurrentTier={isCurrentTier("ACTIVE_HUNTER")}
+                  />
 
-          {/* PRO_ACHIEVER TIER */}
-          <PricingCard 
-            name="Pro Achiever"
-            tierKey="PRO_ACHIEVER"
-            price="99"
-            features={[
-              { text: "Everything in Hunter", included: true },
-              { text: "Mock Interview AI Bot", included: true },
-              { text: "Rank Predictor", included: true },
-              { text: "Multi-Format Export", included: true }
-            ]}
-            buttonConfig={getButtonConfig("PRO_ACHIEVER", "Get Everything")}
-            onBuy={() => handlePayment(99, "PRO_ACHIEVER")}
-            isCurrentTier={isCurrentTier("PRO_ACHIEVER")}
-          />
-        </div>
+                  {/* PRO_ACHIEVER TIER */}
+                  <PricingCard 
+                    name="Pro Achiever"
+                    tierKey="PRO_ACHIEVER"
+                    price="99"
+                    features={[
+                      { text: "Everything in Hunter", included: true },
+                      { text: "Mock Interview AI Bot", included: true },
+                      { text: "Rank Predictor", included: true },
+                      { text: "Multi-Format Export", included: true }
+                    ]}
+                    buttonConfig={getButtonConfig("PRO_ACHIEVER", "Get Everything")}
+                    onBuy={() => handlePayment(99, "PRO_ACHIEVER")}
+                    isCurrentTier={isCurrentTier("PRO_ACHIEVER")}
+                  />
+                </div>
 
-        {loading && (
-          <div className="fixed inset-0 bg-[#070d1f]/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center">
-            <div className="relative w-20 h-20 mb-6">
-              <div className="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
-              <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            </div>
-            <p className="font-headline font-bold text-2xl text-[#dfe4fe]">Initializing Secure Checkout...</p>
-            <p className="text-[#dfe4fe]/60 text-sm mt-3 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-lg">lock</span>
-              Secure Payment Powered by Razorpay
-            </p>
-          </div>
-        )}
+                {loading && (
+                  <div className="fixed inset-0 bg-[#070d1f]/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center">
+                    <div className="relative w-20 h-20 mb-6">
+                      <div className="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
+                      <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                    <p className="font-headline font-bold text-2xl text-[#dfe4fe]">Initializing Secure Checkout...</p>
+                    <p className="text-[#dfe4fe]/60 text-sm mt-3 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary text-lg">lock</span>
+                      Secure Payment Powered by Razorpay
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
+        </main>
       </div>
-    </section>
+    </div>
   );
 };
 
