@@ -85,7 +85,6 @@ export default function VideoModal({ isOpen, onClose }: VideoModalProps) {
             src="/Video.MP4" 
             className="w-full h-full object-cover"
             autoPlay
-            muted
             playsInline
             disablePictureInPicture
             onEnded={() => setIsVideoFinished(true)}
