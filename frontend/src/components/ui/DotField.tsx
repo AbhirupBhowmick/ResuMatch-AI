@@ -1,10 +1,25 @@
 // @ts-nocheck
-import { useEffect, useRef, memo } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import './DotField.css';
 
 const TWO_PI = Math.PI * 2;
 
-const DotField = memo(({
+export interface DotFieldProps extends React.HTMLAttributes<HTMLDivElement> {
+  dotRadius?: number;
+  dotSpacing?: number;
+  cursorRadius?: number;
+  cursorForce?: number;
+  bulgeOnly?: boolean;
+  bulgeStrength?: number;
+  glowRadius?: number;
+  sparkle?: boolean;
+  waveAmplitude?: number;
+  gradientFrom?: string;
+  gradientTo?: string;
+  glowColor?: string;
+}
+
+const DotFieldComponent = memo(({
   dotRadius = 1.5,
   dotSpacing = 14,
   cursorRadius = 500,
@@ -14,8 +29,8 @@ const DotField = memo(({
   glowRadius = 160,
   sparkle = false,
   waveAmplitude = 0,
-  gradientFrom = 'rgba(168, 85, 247, 0.35)',
-  gradientTo = 'rgba(180, 151, 207, 0.25)',
+  gradientFrom = 'rgba(168, 85, 247, 0.65)',
+  gradientTo = 'rgba(180, 151, 207, 0.50)',
   glowColor = '#120F17',
   ...rest
 }) => {
@@ -41,15 +56,13 @@ const DotField = memo(({
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let resizeTimer;
 
-    function resize() {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(doResize, 100);
-    }
-
     function doResize() {
+      if (!canvas || !canvas.parentElement) return;
       const rect = canvas.parentElement.getBoundingClientRect();
       const w = rect.width;
       const h = rect.height;
+
+      if (w === 0 || h === 0) return;
 
       canvas.width = w * dpr;
       canvas.height = h * dpr;
@@ -206,7 +219,12 @@ const DotField = memo(({
     }
 
     doResize();
-    window.addEventListener('resize', resize);
+    const resizeObserver = new ResizeObserver(() => {
+      doResize();
+    });
+    if (canvas.parentElement) {
+      resizeObserver.observe(canvas.parentElement);
+    }
     window.addEventListener('mousemove', onMouseMove, { passive: true });
     rafRef.current = requestAnimationFrame(tick);
 
@@ -218,8 +236,7 @@ const DotField = memo(({
     return () => {
       cancelAnimationFrame(rafRef.current);
       clearInterval(speedInterval);
-      clearTimeout(resizeTimer);
-      window.removeEventListener('resize', resize);
+      resizeObserver.disconnect();
       window.removeEventListener('mousemove', onMouseMove);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -269,6 +286,7 @@ const DotField = memo(({
   );
 });
 
-DotField.displayName = 'DotField';
+DotFieldComponent.displayName = 'DotField';
 
+export const DotField = DotFieldComponent as React.FC<DotFieldProps>;
 export default DotField;
