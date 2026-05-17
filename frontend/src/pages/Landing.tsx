@@ -48,7 +48,7 @@ export default function Landing() {
   return (
     <div className="bg-[#030712] text-on-surface selection:bg-primary-container selection:text-on-primary-container overflow-x-hidden min-h-screen relative font-body">
       {/* Interactive Dot Lattice (Per-Dot Reaction) */}
-      <div className="fixed inset-0 pointer-events-none z-0 opacity-30 shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]">
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-60 shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]">
         <DotField
           dotRadius={1.5}
           dotSpacing={14}

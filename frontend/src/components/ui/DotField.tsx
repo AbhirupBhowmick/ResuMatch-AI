@@ -29,8 +29,8 @@ const DotFieldComponent = memo(({
   glowRadius = 160,
   sparkle = false,
   waveAmplitude = 0,
-  gradientFrom = 'rgba(168, 85, 247, 0.65)',
-  gradientTo = 'rgba(180, 151, 207, 0.50)',
+  gradientFrom = 'rgba(99, 102, 241, 0.90)',
+  gradientTo = 'rgba(168, 85, 247, 0.80)',
   glowColor = '#120F17',
   ...rest
 }) => {
@@ -73,8 +73,8 @@ const DotFieldComponent = memo(({
       sizeRef.current = {
         w,
         h,
-        offsetX: rect.left + window.scrollX,
-        offsetY: rect.top + window.scrollY,
+        offsetX: rect.left,
+        offsetY: rect.top,
       };
 
       buildDots(w, h);
@@ -102,8 +102,8 @@ const DotFieldComponent = memo(({
 
     function onMouseMove(e) {
       const s = sizeRef.current;
-      mouseRef.current.x = e.pageX - s.offsetX;
-      mouseRef.current.y = e.pageY - s.offsetY;
+      mouseRef.current.x = e.clientX - s.offsetX;
+      mouseRef.current.y = e.clientY - s.offsetY;
     }
 
     function updateMouseSpeed() {
