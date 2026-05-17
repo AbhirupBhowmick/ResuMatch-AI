@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import Features from "../components/Features";
 import HowItWorks from "../components/HowItWorks";
 
 import VideoModal from "../components/VideoModal";
+import DotField from "../components/ui/DotField";
 
 const phrases = [
   "Land the Interview.",
@@ -13,60 +13,13 @@ const phrases = [
   "Secure your Future."
 ];
 
-function Dot({ mousePos }: { mousePos: { x: number, y: number } }) {
-  const dotRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
-  const [opacity, setOpacity] = useState(0.2);
-
-  useEffect(() => {
-    if (!dotRef.current) return;
-    const rect = dotRef.current.getBoundingClientRect();
-    const dotX = rect.left + rect.width / 2;
-    const dotY = rect.top + rect.height / 2;
-    
-    const distance = Math.sqrt(
-      Math.pow(mousePos.x - dotX, 2) + Math.pow(mousePos.y - dotY, 2)
-    );
-
-    const threshold = 150;
-    if (distance < threshold) {
-      const effect = 1 - distance / threshold;
-      setScale(1 + effect * 1.5);
-      setOpacity(0.2 + effect * 0.8);
-    } else {
-      setScale(1);
-      setOpacity(0.2);
-    }
-  }, [mousePos]);
-
-  return (
-    <div className="w-10 h-10 flex items-center justify-center">
-      <motion.div
-        ref={dotRef}
-        animate={{ scale, opacity }}
-        transition={{ type: "spring", damping: 20, stiffness: 300, mass: 0.5 }}
-        className="w-1 h-1 bg-primary-container rounded-full"
-      />
-    </div>
-  );
-}
-
 export default function Landing() {
   const [index, setIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [typingSpeed, setTypingSpeed] = useState(100);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isDemoOpen, setIsDemoOpen] = useState(false);
   const token = localStorage.getItem("token");
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
 
   useEffect(() => {
     const handleTyping = () => {
@@ -95,10 +48,15 @@ export default function Landing() {
   return (
     <div className="bg-[#030712] text-on-surface selection:bg-primary-container selection:text-on-primary-container overflow-x-hidden min-h-screen relative font-body">
       {/* Interactive Dot Lattice (Per-Dot Reaction) */}
-      <div className="fixed inset-0 pointer-events-none z-0 grid grid-cols-[repeat(auto-fill,40px)] grid-rows-[repeat(auto-fill,40px)] justify-center opacity-30 shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]">
-        {[...Array(800)].map((_, i) => (
-          <Dot key={i} mousePos={mousePos} />
-        ))}
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-30 shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]">
+        <DotField
+          dotRadius={1.5}
+          dotSpacing={14}
+          bulgeStrength={67}
+          glowRadius={160}
+          sparkle={false}
+          waveAmplitude={0}
+        />
       </div>
 
       <div className="relative z-10 w-full flex flex-col min-h-screen">
