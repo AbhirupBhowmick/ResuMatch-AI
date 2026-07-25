@@ -5,7 +5,10 @@ import './index.css'
 import App from './App.tsx'
 
 // Standardize Axios for the entire application
-const envUrl = import.meta.env.VITE_API_URL || 'https://resumatch-ai-74wq.onrender.com';
+const rawUrl = import.meta.env.VITE_API_URL || 'https://resumatch-ai-74wq.onrender.com';
+const envUrl = (rawUrl.trim() === '' || rawUrl.includes('railway.app')) 
+  ? 'https://resumatch-ai-74wq.onrender.com' 
+  : rawUrl;
 axios.defaults.baseURL = envUrl.startsWith('http') ? envUrl : `https://${envUrl}`;
 axios.defaults.withCredentials = true;
 
