@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: resumatch-ai-backend
+    runtime: java
+
+    rootDir: backend
+
+    buildCommand: mvn clean package -DskipTests
+
+    startCommand: java -jar target/backend-0.0.1-SNAPSHOT.jar
+
+    plan: free
