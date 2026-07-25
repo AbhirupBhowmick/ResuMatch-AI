@@ -58,8 +58,8 @@ export default function InterviewPrep() {
     } catch (err: any) {
       const errorData = err.response?.data;
       if (errorData?.status === "UPGRADE_REQUIRED") {
-        showNotification("error", errorData.message, "Upgrade Required");
-        navigate("/pricing");
+        showNotification("error", errorData.message || "Monthly limit reached.", "Access Limit");
+        setErrorMsg(errorData.message || "Limit reached.");
       } else {
         setErrorMsg(`Failed to generate: ${errorData?.message || err.message}`);
       }
@@ -82,8 +82,8 @@ export default function InterviewPrep() {
     } catch (err: any) {
       const errorData = err.response?.data;
       if (errorData?.status === "UPGRADE_REQUIRED") {
-        showNotification("error", errorData.message, "Upgrade Required");
-        navigate("/pricing");
+        showNotification("error", errorData.message || "Monthly limit reached.", "Access Limit");
+        setErrorMsg(errorData.message || "Limit reached.");
       } else {
         setErrorMsg(`MCQ Error: ${errorData?.message || err.message}`);
       }

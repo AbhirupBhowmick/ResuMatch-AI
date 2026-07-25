@@ -54,7 +54,6 @@ const DotFieldComponent = memo(({
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { alpha: true });
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    let resizeTimer;
 
     function doResize() {
       if (!canvas || !canvas.parentElement) return;

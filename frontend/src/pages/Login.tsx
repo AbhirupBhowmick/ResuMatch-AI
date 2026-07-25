@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import axios from "axios";
@@ -14,12 +14,13 @@ export default function Login() {
   
   const navigate = useNavigate();
 
-  useState(() => {
+  useEffect(() => {
     const savedEmail = localStorage.getItem("remembered_email");
     if (savedEmail) {
       setEmail(savedEmail);
+      setRememberMe(true);
     }
-  });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,15 +45,25 @@ export default function Login() {
         navigate(lastPath || "/dashboard");
         return;
       } else {
-        // Sign Up Flow - Real Backend
+        // Sign Up Flow - Register and Auto-Login
         await axios.post(`${import.meta.env.VITE_API_URL || ''}/api/auth/register`, { name, email, password }, { withCredentials: true });
-        setIsLogin(true);
-        setErrorMsg("Registration successful! Please sign in.");
+        
+        // Auto Login
+        const loginResponse = await axios.post(`${import.meta.env.VITE_API_URL || ''}/api/auth/login`, { email, password }, { withCredentials: true });
+        localStorage.setItem("token", loginResponse.data.token);
+        localStorage.setItem("user_email", email);
+        localStorage.setItem("user_name", loginResponse.data.name || name);
+        localStorage.setItem("user_tier", loginResponse.data.tier || "FREE");
+        
+        if (rememberMe) {
+          localStorage.setItem("remembered_email", email);
+        }
+
+        navigate("/dashboard");
       }
     } catch (err: any) {
-      // Improved error reporting
       const msg = err.response?.data?.message || err.response?.data || err.message;
-      setErrorMsg(`Authentication Failed: ${msg}. Check API connection.`);
+      setErrorMsg(`Authentication Failed: ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -161,7 +172,15 @@ export default function Login() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center px-1">
                     <label className="block text-xs font-bold text-outline uppercase tracking-wider" htmlFor="password">Password</label>
-                    {isLogin && <Link className="text-xs font-bold text-primary hover:text-primary-container transition-colors" to="#">Forgot Password?</Link>}
+                    {isLogin && (
+                      <button 
+                        type="button"
+                        onClick={() => alert("Password reset functionality: Please enter your email and click Sign In, or contact support@resumatch.ai")} 
+                        className="text-xs font-bold text-primary hover:text-primary-container transition-colors"
+                      >
+                        Forgot Password?
+                      </button>
+                    )}
                   </div>
                   <input required className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-4 text-on-surface placeholder:text-outline/40 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all font-body" id="password" placeholder="••••••••" type="password" value={password} onChange={e => setPassword(e.target.value)} />
                 </div>
@@ -181,7 +200,7 @@ export default function Login() {
                   </div>
                 )}
 
-                <button disabled={loading} className="w-full flex items-center justify-center bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:brightness-110 transition-all active:scale-[0.98] font-headline disabled:opacity-50" type="submit">
+                <button disabled={loading} className="w-full flex items-center justify-center bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:brightness-110 transition-all active:scale-[0.98] font-headline disabled:opacity-50 cursor-pointer" type="submit">
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <span className="tracking-wide">{isLogin ? "Sign In" : "Sign Up"}</span>
                 </button>
@@ -190,7 +209,7 @@ export default function Login() {
               <div className="pt-6 text-center">
                 <p className="text-on-surface-variant font-body text-sm">
                   {isLogin ? "Don't have an account?" : "Already have an account?"}
-                  <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-primary font-bold hover:underline ml-2">
+                  <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-primary font-bold hover:underline ml-2 cursor-pointer">
                     {isLogin ? "Sign up" : "Sign in"}
                   </button>
                 </p>
@@ -205,9 +224,8 @@ export default function Login() {
         <div className="flex flex-col md:flex-row justify-between items-center px-8 gap-4">
           <p className="font-body text-xs tracking-wide text-on-surface-variant opacity-70">© 2024 ResuMatch AI. The Digital Curator.</p>
           <div className="flex gap-6">
-            <Link className="font-body text-xs tracking-wide text-on-surface-variant opacity-70 hover:text-primary transition-colors" to="#">Privacy Policy</Link>
-            <Link className="font-body text-xs tracking-wide text-on-surface-variant opacity-70 hover:text-primary transition-colors" to="#">Terms of Service</Link>
-            <Link className="font-body text-xs tracking-wide text-on-surface-variant opacity-70 hover:text-primary transition-colors" to="#">Support</Link>
+            <Link className="font-body text-xs tracking-wide text-on-surface-variant opacity-70 hover:text-primary transition-colors" to="/">Home</Link>
+            <button onClick={() => window.open('mailto:support@resumatch.ai')} className="font-body text-xs tracking-wide text-on-surface-variant opacity-70 hover:text-primary transition-colors cursor-pointer">Support</button>
           </div>
         </div>
       </footer>

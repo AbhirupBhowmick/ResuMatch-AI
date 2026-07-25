@@ -107,7 +107,7 @@ export default function Results() {
     }
 
     try {
-      let headers: any = {};
+      const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       const response = await axios.get(

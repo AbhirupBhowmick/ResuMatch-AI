@@ -27,6 +27,11 @@ export default function Assessment() {
     setQuestions(JSON.parse(rawQuestions));
   }, [navigate]);
 
+  const handleFinish = () => {
+    localStorage.setItem("assessmentAnswers", JSON.stringify(selectedAnswers));
+    navigate("/assessment-result");
+  };
+
   useEffect(() => {
     if (timeLeft <= 0) {
       handleFinish();
@@ -50,11 +55,6 @@ export default function Assessment() {
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
     }
-  };
-
-  const handleFinish = () => {
-    localStorage.setItem("assessmentAnswers", JSON.stringify(selectedAnswers));
-    navigate("/assessment-result");
   };
 
   const formatTime = (seconds: number) => {

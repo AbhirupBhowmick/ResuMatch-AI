@@ -18,6 +18,16 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      "/oauth2": {
+        target: process.env.VITE_API_URL || "http://127.0.0.1:8080",
+        changeOrigin: true,
+        secure: false,
+      },
+      "/login/oauth2": {
+        target: process.env.VITE_API_URL || "http://127.0.0.1:8080",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 })

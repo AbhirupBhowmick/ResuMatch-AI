@@ -250,12 +250,9 @@ const CoverLetter = () => {
                   <p className="font-headline font-bold text-on-surface">Pro Customizations</p>
                   <p className="text-xs text-on-surface-variant">Unlock custom tones, character limits, and more.</p>
                 </div>
-                <button
-                  onClick={() => navigate("/pricing")}
-                  className="px-6 py-2 bg-primary/20 text-primary border border-primary/30 rounded-full font-headline font-bold text-sm hover:bg-primary/30 transition-all cursor-pointer"
-                >
-                  Upgrade to Pro
-                </button>
+                <div className="px-6 py-2 bg-primary/10 text-primary border border-primary/20 rounded-full font-headline font-bold text-sm">
+                  Pro Feature
+                </div>
               </div>
               <div className="p-6 opacity-30 grayscale blur-sm flex flex-col gap-4">
                 <div className="h-2 w-3/4 bg-outline-variant rounded"></div>

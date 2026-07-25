@@ -1,5 +1,4 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 
 interface TierLimitModalProps {
   isOpen: boolean;
@@ -8,7 +7,6 @@ interface TierLimitModalProps {
 }
 
 export default function TierLimitModal({ isOpen, onClose, message }: TierLimitModalProps) {
-  const navigate = useNavigate();
 
   return (
     <AnimatePresence>
@@ -33,19 +31,10 @@ export default function TierLimitModal({ isOpen, onClose, message }: TierLimitMo
             
             <div className="flex flex-col w-full gap-3 relative z-10 mt-2">
               <button 
-                onClick={() => {
-                  onClose();
-                  navigate("/pricing");
-                }}
+                onClick={onClose}
                 className="w-full bg-[#4F46E5] hover:bg-[#4338CA] text-white py-4 rounded-xl font-bold text-sm tracking-wide transition-all shadow-[0_8px_16px_rgba(79,70,229,0.3)] hover:scale-[1.02] active:scale-[0.98]"
               >
-                View Premium Plans
-              </button>
-              <button 
-                onClick={onClose}
-                className="w-full text-on-surface-variant hover:text-on-surface font-semibold text-xs py-2 transition-colors"
-              >
-                Maybe later
+                Close
               </button>
             </div>
           </motion.div>

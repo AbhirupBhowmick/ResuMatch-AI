@@ -71,7 +71,6 @@ export default function Landing() {
           </div>
           <div className="hidden md:flex items-center space-x-8">
             <a className="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors scale-95 duration-200" href="#how-it-works">How it Works</a>
-            <a className="text-slate-400 hover:text-indigo-300 transition-colors scale-95 duration-200" href="#pricing">Pricing</a>
             <a className="text-slate-400 hover:text-indigo-300 transition-colors scale-95 duration-200" href="#features">Features</a>
           </div>
           <div className="flex items-center space-x-6">
@@ -180,10 +179,9 @@ export default function Landing() {
             <div className="text-slate-500">© 2024 ResuMatch AI. The Digital Curator.</div>
           </div>
           <div className="flex flex-wrap justify-center gap-8 md:gap-12">
-            <Link className="text-slate-500 hover:text-indigo-300 opacity-80 hover:opacity-100 transition-opacity" to="#">Product</Link>
-            <Link className="text-slate-500 hover:text-indigo-300 opacity-80 hover:opacity-100 transition-opacity" to="#">Company</Link>
-            <Link className="text-slate-500 hover:text-indigo-300 opacity-80 hover:opacity-100 transition-opacity" to="#">Support</Link>
-            <Link className="text-slate-500 hover:text-indigo-300 opacity-80 hover:opacity-100 transition-opacity" to="#">Privacy</Link>
+            <a className="text-slate-500 hover:text-indigo-300 opacity-80 hover:opacity-100 transition-opacity" href="#features">Features</a>
+            <a className="text-slate-500 hover:text-indigo-300 opacity-80 hover:opacity-100 transition-opacity" href="#how-it-works">How It Works</a>
+            <button onClick={() => window.open('mailto:support@resumatch.ai')} className="text-slate-500 hover:text-indigo-300 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">Support</button>
           </div>
         </div>
       </footer>
