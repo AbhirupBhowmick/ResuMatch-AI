@@ -16,6 +16,8 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/pdf_template.html ./pdf_template.html
+COPY --from=build /app/data ./data
 
 EXPOSE 8080
 
