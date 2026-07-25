@@ -22,7 +22,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final JwtUtils jwtUtils;
     private final UserRepository userRepository;
 
-    @Value("${app.frontend-url:https://resu-match-ai-livid.vercel.app}")
+    @Value("${app.frontend-url:https://resu-match-ai-eight.vercel.app}")
     private String frontendUrl;
 
     @Override
@@ -49,16 +49,25 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private String resolveFrontendUrl(HttpServletRequest request) {
         String origin = request.getHeader("Origin");
-        if (origin != null && !origin.isBlank()) {
+        if (origin != null && !origin.isBlank() && !isGoogleDomain(origin)) {
             return origin;
         }
         String referer = request.getHeader("Referer");
-        if (referer != null && !referer.isBlank()) {
+        if (referer != null && !referer.isBlank() && !isGoogleDomain(referer)) {
             try {
                 java.net.URI uri = new java.net.URI(referer);
-                return uri.getScheme() + "://" + uri.getAuthority();
+                String schemeHost = uri.getScheme() + "://" + uri.getAuthority();
+                if (!isGoogleDomain(schemeHost)) {
+                    return schemeHost;
+                }
             } catch (Exception ignored) {}
         }
         return frontendUrl;
+    }
+
+    private boolean isGoogleDomain(String url) {
+        if (url == null) return false;
+        String lower = url.toLowerCase();
+        return lower.contains("google.com") || lower.contains("googleusercontent.com") || lower.contains("onrender.com");
     }
 }

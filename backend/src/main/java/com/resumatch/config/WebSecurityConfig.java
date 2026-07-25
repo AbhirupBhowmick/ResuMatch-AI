@@ -43,7 +43,7 @@ public class WebSecurityConfig {
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final PasswordEncoder passwordEncoder;
 
-    @org.springframework.beans.factory.annotation.Value("${app.frontend-url:https://resu-match-ai-livid.vercel.app}")
+    @org.springframework.beans.factory.annotation.Value("${app.frontend-url:https://resu-match-ai-eight.vercel.app}")
     private String frontendUrl;
 
     @Bean

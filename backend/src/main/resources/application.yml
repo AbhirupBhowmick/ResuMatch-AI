@@ -59,7 +59,7 @@ server:
     include-message: always
 
 app:
-  frontend-url: ${FRONTEND_URL:https://resu-match-ai-livid.vercel.app}
+  frontend-url: ${FRONTEND_URL:https://resu-match-ai-eight.vercel.app}
 
 google:
   client-id: ${GOOGLE_CLIENT_ID:}
