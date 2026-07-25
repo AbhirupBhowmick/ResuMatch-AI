@@ -6,7 +6,6 @@
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind%20CSS-v4.0-38B2AC.svg?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
 [![Database](https://img.shields.io/badge/PostgreSQL-Neon-blue.svg?style=for-the-badge&logo=postgresql)](https://neon.tech/)
 [![AI Engine](https://img.shields.io/badge/Gemini%20AI-2.5%20Flash-blueviolet.svg?style=for-the-badge&logo=google)](https://deepmind.google/technologies/gemini/)
-[![Payments](https://img.shields.io/badge/Razorpay-Gateway-blue.svg?style=for-the-badge&logo=razorpay)](https://razorpay.com/)
 
 ResuMatch AI is a state-of-the-art, full-stack, AI-powered career optimization platform. Built with a robust **Spring Boot 3 (Java 21)** backend, a gorgeous, high-fidelity **React 19 (TypeScript & Vite)** frontend, and integrated with **Google Gemini 2.5 Flash**, it serves as an elite digital curator that transforms static resumes into high-impact, ATS-optimized narratives that win jobs.
 
@@ -27,10 +26,8 @@ ResuMatch AI is a state-of-the-art, full-stack, AI-powered career optimization p
 *   **Interactive Smart Flashcards:** Generates 5 high-impact, role-specific behavioral/technical interview prep questions, difficulty grading, and hiring manager context.
 *   **Competitive Rank Predictor:** Simulates a virtual pool of 200 applicants to calculate the candidate's percentile rank, specific competitor advantages, and quick wins.
 
-### 💳 Monetization & Extensions
-*   **Tiered Monetization Architecture:** Subscriptions categorized into `FREE`, `STARTER`, `ACTIVE_HUNTER`, `PRO_ACHIEVER`, and `ELITE`.
-*   **Razorpay Payment Gateway:** Direct checkout with automatic signature validation, secure payment verification, and asynchronous **webhooks** for instant account provisioning.
-*   **Chrome Extension Support:** A lightweight, secure endpoint (`/api/v1/extension/quick-scan`) allowing Pro tier users to perform background matches directly from LinkedIn/Indeed.
+### 🔌 Integrations & Extensions
+*   **Chrome Extension Support:** A lightweight, secure endpoint (`/api/v1/extension/quick-scan`) allowing account users to perform background matches directly from LinkedIn/Indeed.
 
 ---
 
@@ -51,7 +48,6 @@ graph TD
     Controllers[REST Controllers]
     Tika[Apache Tika Parser]
     Gemini[Gemini AI Service]
-    Payments[Razorpay Payment Service]
     iText[iText PDF Engine]
 
     %% Data
@@ -59,7 +55,6 @@ graph TD
 
     %% External
     GeminiAPI[Google Gemini API]
-    RazorpayAPI[Razorpay Gateway]
 
     %% Connections
     Browser -->|HTTPS / JWT| Security
@@ -68,12 +63,10 @@ graph TD
     
     Controllers --> Tika
     Controllers --> Gemini
-    Controllers --> Payments
     Controllers --> iText
     Controllers --> DB
 
     Gemini -->|AI Request Mime JSON| GeminiAPI
-    Payments -->|UPI/QR Order / Webhooks| RazorpayAPI
     iText -->|Generate Styled A4 PDF| Browser
 ```
 
@@ -86,11 +79,11 @@ ResuMatch AI/
 ├── backend/
 │   ├── src/main/java/com/resumatch/
 │   │   ├── config/             # Spring Security, CORS & Web Configuration
-│   │   ├── controller/         # REST API Endpoints (Auth, Payments, AI, Resumes)
+│   │   ├── controller/         # REST API Endpoints (Auth, AI, Resumes)
 │   │   ├── exception/          # Custom exceptions (JWT, Auth, Gemini API)
 │   │   ├── model/              # JPA Database Entities & Subscription Enums
 │   │   ├── repository/         # Data Access Repositories (JPA / Hibernate)
-│   │   └── service/            # Core Services (Gemini, iText PDF, Payments, Users)
+│   │   └── service/            # Core Services (Gemini, iText PDF, Users)
 │   ├── src/main/resources/
 │   │   └── application.yml     # Application properties & ENV mappings
 │   └── pom.xml                 # Maven dependencies (Java 21, Spring Boot 3.4.2)
@@ -99,7 +92,7 @@ ResuMatch AI/
 │   ├── src/
 │   │   ├── components/         # Premium Reusable UI Elements (Modals, Upload Zones)
 │   │   ├── context/            # React Contexts (Auth, Notifications)
-│   │   ├── pages/              # Premium Screens (Dashboard, JobTailor, Pricing, Prep)
+│   │   ├── pages/              # Premium Screens (Dashboard, JobTailor, Prep)
 │   │   ├── App.tsx             # Route Configuration
 │   │   └── index.css           # Custom styles with Tailwind CSS
 │   ├── package.json            # React 19, Lucide Icons, Framer Motion, Recharts
@@ -115,7 +108,7 @@ ResuMatch AI/
 | **Frontend** | React 19, TypeScript, Vite, Tailwind CSS v4, Framer Motion, Recharts, Canvas-Confetti, Axios, Lucide Icons |
 | **Backend** | Java 21, Spring Boot 3.4.2, Spring Security, JPA Hibernate, Apache Tika, iText PDF, Lombok, Maven |
 | **Database** | PostgreSQL (Neon serverless cloud) / H2 in-memory |
-| **API / Services** | Google Gemini API (model: `gemini-2.5-flash`), Razorpay Payment API & Webhooks, Google OAuth 2.0 |
+| **API / Services** | Google Gemini API (model: `gemini-2.5-flash`), Google OAuth 2.0 |
 
 ---
 
@@ -126,7 +119,6 @@ ResuMatch AI/
 *   **Node.js** (v18.0.0 or higher) and npm.
 *   **PostgreSQL** instance (local or Neon.tech cloud).
 *   **Google Gemini API Key** (obtainable via Google AI Studio).
-*   **Razorpay Developer Credentials** (Key ID & Key Secret).
 *   **Google Developer Console Credentials** (OAuth 2.0 Client ID & Client Secret).
 
 ---
@@ -145,9 +137,6 @@ Navigate to the `backend/` directory:
     export GOOGLE_CLIENT_ID=your_google_oauth_client_id
     export GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
     export JWT_SECRET=your_super_secure_jwt_signing_key_32_chars
-    export RAZORPAY_KEY_ID=rzp_test_your_razorpay_key_id
-    export RAZORPAY_KEY_SECRET=your_razorpay_key_secret
-    export RAZORPAY_WEBHOOK_SECRET=your_razorpay_webhook_signing_secret
     export GEMINI_API_KEY=AIzaSy...your_gemini_api_key
     ```
 
@@ -202,17 +191,12 @@ Navigate to the `frontend/` directory:
 *   `GET /api/v1/resume/history` — Lists past audits and analyses for the user.
 *   `POST /api/v1/resume/analyze` — Evaluates parsed text against target industry & experience.
 
-### 🧠 Premium Features (Requires Active Hunter / Pro Achiever)
+### 🧠 Premium Features
 *   `POST /api/v1/premium/star` — Generate STAR-compliant optimized resume bullet points.
 *   `POST /api/v1/premium/flashcards` — Role-specific behavioral prep interview flashcards.
 *   `POST /api/v1/premium/cover-letter` — Creates dynamic customized cover letter parts.
 *   `POST /api/v1/premium/competitive-rank` — Runs mock applicant pool simulation percentile rankings.
 *   `POST /api/v1/premium/generate-pdf` — Converts cover letter JSON into a styled downloadable A4 PDF.
-
-### 💳 Payments & Subscription
-*   `POST /api/v1/payments/create-order` — Initiates Razorpay Order.
-*   `POST /api/v1/payments/verify` — Validates signature and upgrades subscription tier.
-*   `POST /api/v1/payments/webhook` — Listens to Razorpay payment events asynchronously.
 
 ### 🔌 Browser Extension
 *   `POST /api/v1/extension/quick-scan` — API Key validated matching service for extension quick-audits.

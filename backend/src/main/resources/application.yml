@@ -43,12 +43,6 @@ jwt:
   secret: ${JWT_SECRET}
   expirationMs: 86400000 # 24 hours
 
-# Payment Integration
-razorpay:
-  keyId: ${RAZORPAY_KEY_ID}
-  keySecret: ${RAZORPAY_KEY_SECRET}
-  webhookSecret: ${RAZORPAY_WEBHOOK_SECRET}
-
 # AI Integration
 gemini:
   api:
