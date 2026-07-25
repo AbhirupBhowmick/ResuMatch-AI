@@ -14,17 +14,17 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: process.env.VITE_API_URL || "http://127.0.0.1:8080",
+        target: process.env.VITE_API_URL || "https://resumatch-ai-74wq.onrender.com",
         changeOrigin: true,
         secure: false,
       },
       "/oauth2": {
-        target: process.env.VITE_API_URL || "http://127.0.0.1:8080",
+        target: process.env.VITE_API_URL || "https://resumatch-ai-74wq.onrender.com",
         changeOrigin: true,
         secure: false,
       },
       "/login/oauth2": {
-        target: process.env.VITE_API_URL || "http://127.0.0.1:8080",
+        target: process.env.VITE_API_URL || "https://resumatch-ai-74wq.onrender.com",
         changeOrigin: true,
         secure: false,
       },

@@ -130,8 +130,8 @@ export default function Login() {
               <div className="flex justify-center w-full">
                 <a
                   href={(() => {
-                    const envUrl = import.meta.env.VITE_API_URL || '';
-                    const baseUrl = envUrl === '' ? '' : (envUrl.startsWith('http') ? envUrl : `https://${envUrl}`);
+                    const envUrl = import.meta.env.VITE_API_URL || 'https://resumatch-ai-74wq.onrender.com';
+                    const baseUrl = envUrl.startsWith('http') ? envUrl : `https://${envUrl}`;
                     return `${baseUrl}/oauth2/authorization/google`;
                   })()}
                   className="w-full flex items-center justify-center bg-[#131314] text-[#e3e3e3] border border-[#8e918f]/30 font-bold py-4 rounded-full shadow-lg hover:bg-[#2b2b2b] transition-all font-headline"

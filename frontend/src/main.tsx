@@ -5,8 +5,8 @@ import './index.css'
 import App from './App.tsx'
 
 // Standardize Axios for the entire application
-const envUrl = import.meta.env.VITE_API_URL || '';
-axios.defaults.baseURL = envUrl === '' ? '' : (envUrl.startsWith('http') ? envUrl : `https://${envUrl}`);
+const envUrl = import.meta.env.VITE_API_URL || 'https://resumatch-ai-74wq.onrender.com';
+axios.defaults.baseURL = envUrl.startsWith('http') ? envUrl : `https://${envUrl}`;
 axios.defaults.withCredentials = true;
 
 import { NotificationProvider } from './context/NotificationContext';
