@@ -64,19 +64,16 @@ public class InterviewService {
             }
         }
 
-        String prompt = "As a Senior Hiring Manager, identify exactly 3 potential gaps (red flags) in this resume relative to the following Job Description (JD) " +
-                "and generate EXACTLY 4 tough behavioral interview questions based on those gaps.\n" +
-                "Ensure all sentences (question, strategy, sampleAnswer) are complete, detailed, and professionally written. Do not truncate text.\n" +
-                "For each question, provide a 'Winning Answer' strategy based on the user's specific experience.\n\n" +
-                "Return ONLY a strict JSON array of objects where each object has exactly these fields:\n" +
-                "- \"question\": string (the behavioral interview question)\n" +
-                "- \"redFlagAddressed\": string (the specific gap/red flag this question probes)\n" +
-                "- \"strategy\": string (a custom Winning Answer strategy)\n" +
-                "- \"sampleAnswer\": string (a sample response utilizing the strategy)\n\n" +
-                "Job Description:\n" + jobDescription + "\n\n" +
-                "Resume Text:\n" + extractedText;
+        String systemInstruction = com.resumatch.prompt.SharedRecruiterInstructions.SYSTEM_INSTRUCTION;
+        String prompt = com.resumatch.prompt.InterviewPrompt.buildPrompt(extractedText, jobDescription);
 
         Map<String, Object> requestBody = new HashMap<>();
+        Map<String, Object> sysInst = new HashMap<>();
+        Map<String, Object> sysParts = new HashMap<>();
+        sysParts.put("text", systemInstruction);
+        sysInst.put("parts", List.of(sysParts));
+        requestBody.put("system_instruction", sysInst);
+
         Map<String, Object> contents = new HashMap<>();
         Map<String, Object> parts = new HashMap<>();
         parts.put("text", prompt);
