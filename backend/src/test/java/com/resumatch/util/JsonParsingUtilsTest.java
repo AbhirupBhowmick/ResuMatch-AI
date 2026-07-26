@@ -53,4 +53,14 @@ public class JsonParsingUtilsTest {
         assertEquals("{\"overallScore\":88,\"atsScore\":86}", result);
         assertTrue(JsonParsingUtils.isValidJson(result));
     }
+
+    @Test
+    @DisplayName("6. Industry/Level leading commentary before JSON object should extract JSON object")
+    public void testIndustryLeadingCommentary() {
+        String input = "Software Engineering. Mid-Level (Note: The candidate is actually a senior software developer).\n\n{\"overallScore\":88,\"atsScore\":86}";
+        String result = JsonParsingUtils.extractJsonObject(input);
+        assertNotNull(result);
+        assertEquals("{\"overallScore\":88,\"atsScore\":86}", result);
+        assertTrue(JsonParsingUtils.isValidJson(result));
+    }
 }

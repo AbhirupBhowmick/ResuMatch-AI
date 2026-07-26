@@ -7,12 +7,9 @@ public class ResumeAnalysisPrompt {
 
     public static String buildPrompt(String resumeText, String targetIndustry, String experienceLevel) {
         return """
-            STRICT INSTRUCTION: You MUST return ONLY a single, raw, valid JSON object starting with '{' and ending with '}'. Do not include markdown code block syntax (```json), intro text, or echo the prompt.
+            STRICT FORMAT MANDATE: You MUST return ONLY a single, raw, valid JSON object starting with '{' and ending with '}'. Do NOT echo the prompt. Do NOT write introductory words, industry names, notes, or markdown fences (```json).
             
-            Perform a complete FAANG-level recruiter audit and ATS parsing scan on the resume text provided below.
-            
-            Target Industry Context: %s
-            Target Experience Level Context: %s
+            Evaluate the resume text provided below for the target industry of "%s" at experience level "%s".
             
             Required Output JSON Schema:
             {
