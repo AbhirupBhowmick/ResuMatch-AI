@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Sparkles, ArrowRight, ShieldCheck, FileSearch, Target, FileText } from "lucide-react";
 import Features from "../components/Features";
 import HowItWorks from "../components/HowItWorks";
-import AnimatedResumeAudit from "../components/AnimatedResumeAudit";
+import InteractiveScratchReport from "../components/InteractiveScratchReport";
 import VideoModal from "../components/VideoModal";
 import DotField from "../components/ui/DotField";
 
@@ -122,8 +122,8 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* INTERACTIVE ANIMATED RESUME AUDIT (REPLACING STATIC IMAGE) */}
-            <AnimatedResumeAudit />
+            {/* INTERACTIVE CANVAS SCRATCH REPORT DEMO */}
+            <InteractiveScratchReport />
 
           </section>
 
