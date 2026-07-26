@@ -1,103 +1,70 @@
+import { Upload, Sparkles, CheckCircle2 } from "lucide-react";
+
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" className="py-24 px-6 md:px-12 z-10 relative flex flex-col items-center">
+    <section id="how-it-works" className="py-20 px-6 md:px-8 max-w-6xl mx-auto space-y-12">
+      
       {/* Header Section */}
-      <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
-        <h2 className="font-headline text-4xl md:text-6xl font-extrabold tracking-tight text-on-surface">
-          The Anatomy of <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-fixed to-tertiary-fixed">Precision Placement.</span>
+      <div className="text-center space-y-2 max-w-xl mx-auto">
+        <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
+          How It Works
         </h2>
-        <p className="font-body text-lg text-on-surface-variant max-w-2xl mx-auto">
-          Discover how our intelligent auditing engine deconstructs your experience to perfectly align with enterprise expectations.
+        <p className="text-xs md:text-sm text-zinc-400">
+          Three simple steps to build stronger job applications.
         </p>
       </div>
 
-      {/* Vertical Timeline Layout */}
-      <div className="relative w-full max-w-4xl mx-auto">
-        {/* Glowing Dashed Line (Background) */}
-        <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-primary/50 via-tertiary/50 to-transparent -translate-x-1/2 hidden md:block" style={{ borderLeft: "2px dashed rgba(167, 165, 255, 0.3)" }}></div>
-        <div className="space-y-16 relative">
-          
-          {/* Step 1 */}
-          <div className="flex flex-col md:flex-row items-center gap-8 relative group">
-            {/* Mobile Line Segment */}
-            <div className="absolute left-8 top-16 bottom-[-4rem] w-px bg-gradient-to-b from-primary/50 to-tertiary/50 block md:hidden" style={{ borderLeft: "2px dashed rgba(167, 165, 255, 0.3)" }}></div>
-            {/* Content Card (Left on Desktop) */}
-            <div className="w-full md:w-1/2 flex justify-end pl-16 md:pl-0 md:pr-12">
-              <div className="w-full bg-surface-container-low rounded-xl p-8 relative overflow-hidden transition-all duration-300 hover:bg-surface-container shadow-[0_4px_32px_rgba(151,149,255,0.03)] border-t border-outline-variant/15">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                  <span className="material-symbols-outlined text-6xl text-primary" style={{ fontVariationSettings: "'FILL' 0" }}>upload_file</span>
-                </div>
-                <div className="mb-4 inline-flex items-center justify-center w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/20 shadow-[0_0_15px_rgba(151,149,255,0.1)]">
-                  <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>cloud_upload</span>
-                </div>
-                <h3 className="font-headline text-xl font-bold text-on-surface mb-2 tracking-tight">Drop Your Resume.</h3>
-                <p className="font-body text-sm text-on-surface-variant leading-relaxed">
-                  Upload your existing PDF or DOCX into our secure vault. We handle the parsing instantly.
-                </p>
-              </div>
-            </div>
-            {/* Number Marker (Center) */}
-            <div className="absolute left-0 md:left-1/2 -translate-x-2 md:-translate-x-1/2 flex items-center justify-center w-16 h-16 rounded-full bg-surface border-4 border-surface-container z-10 shadow-[0_0_20px_rgba(100,94,251,0.2)]">
-              <span className="font-headline text-2xl font-black text-transparent bg-clip-text bg-gradient-to-br from-primary-fixed to-tertiary">1</span>
-            </div>
-            {/* Spacer (Right on Desktop) */}
-            <div className="hidden md:block w-1/2"></div>
+      {/* Steps Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        {/* Step 1 */}
+        <div className="p-6 rounded-xl bg-[#121827] border border-white/10 space-y-4 relative">
+          <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">
+            1
           </div>
-
-          {/* Step 2 */}
-          <div className="flex flex-col md:flex-row-reverse items-center gap-8 relative group">
-            {/* Mobile Line Segment */}
-            <div className="absolute left-8 top-16 bottom-[-4rem] w-px bg-gradient-to-b from-tertiary/50 to-primary/50 block md:hidden" style={{ borderLeft: "2px dashed rgba(167, 165, 255, 0.3)" }}></div>
-            {/* Content Card (Right on Desktop) */}
-            <div className="w-full md:w-1/2 flex justify-start pl-16 md:pl-12">
-              <div className="w-full bg-surface-container-low rounded-xl p-8 relative overflow-hidden transition-all duration-300 hover:bg-surface-container shadow-[0_4px_32px_rgba(151,149,255,0.03)] border-t border-outline-variant/15">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                  <span className="material-symbols-outlined text-6xl text-tertiary" style={{ fontVariationSettings: "'FILL' 0" }}>document_scanner</span>
-                </div>
-                <div className="mb-4 inline-flex items-center justify-center w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/20 shadow-[0_0_15px_rgba(144,147,255,0.1)]">
-                  <span className="material-symbols-outlined text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>troubleshoot</span>
-                </div>
-                <h3 className="font-headline text-xl font-bold text-on-surface mb-2 tracking-tight">The AI Audit.</h3>
-                <p className="font-body text-sm text-on-surface-variant leading-relaxed">
-                  Our Gemini-powered engine scans your layout, keywords, and metrics exactly like an enterprise ATS.
-                </p>
-              </div>
-            </div>
-            {/* Number Marker (Center) */}
-            <div className="absolute left-0 md:left-1/2 -translate-x-2 md:-translate-x-1/2 flex items-center justify-center w-16 h-16 rounded-full bg-surface border-4 border-surface-container z-10 shadow-[0_0_20px_rgba(144,147,255,0.2)]">
-              <span className="font-headline text-2xl font-black text-transparent bg-clip-text bg-gradient-to-br from-tertiary to-primary-fixed">2</span>
-            </div>
-            {/* Spacer (Left on Desktop) */}
-            <div className="hidden md:block w-1/2"></div>
+          <div className="space-y-1">
+            <h3 className="text-base font-semibold text-white flex items-center gap-2">
+              <Upload className="w-4 h-4 text-indigo-400" />
+              Upload Resume
+            </h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Upload your existing PDF or DOCX resume into our workspace securely.
+            </p>
           </div>
-
-          {/* Step 3 */}
-          <div className="flex flex-col md:flex-row items-center gap-8 relative group">
-            {/* Content Card (Left on Desktop) */}
-            <div className="w-full md:w-1/2 flex justify-end pl-16 md:pl-0 md:pr-12">
-              <div className="w-full bg-surface-container-low rounded-xl p-8 relative overflow-hidden transition-all duration-300 hover:bg-surface-container shadow-[0_4px_32px_rgba(151,149,255,0.03)] border-t border-outline-variant/15">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                  <span className="material-symbols-outlined text-6xl text-primary-fixed-dim" style={{ fontVariationSettings: "'FILL' 0" }}>rocket_launch</span>
-                </div>
-                <div className="mb-4 inline-flex items-center justify-center w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/20 shadow-[0_0_15px_rgba(136,133,255,0.1)]">
-                  <span className="material-symbols-outlined text-primary-fixed-dim" style={{ fontVariationSettings: "'FILL' 1" }}>rocket</span>
-                </div>
-                <h3 className="font-headline text-xl font-bold text-on-surface mb-2 tracking-tight">Curate & Conquer.</h3>
-                <p className="font-body text-sm text-on-surface-variant leading-relaxed">
-                  Review your 100-point score, fix the highlighted gaps, and start landing interviews with confidence.
-                </p>
-              </div>
-            </div>
-            {/* Number Marker (Center) */}
-            <div className="absolute left-0 md:left-1/2 -translate-x-2 md:-translate-x-1/2 flex items-center justify-center w-16 h-16 rounded-full bg-surface border-4 border-surface-container z-10 shadow-[0_0_20px_rgba(136,133,255,0.2)]">
-              <span className="font-headline text-2xl font-black text-transparent bg-clip-text bg-gradient-to-br from-primary-fixed-dim to-tertiary-fixed-dim">3</span>
-            </div>
-            {/* Spacer (Right on Desktop) */}
-            <div className="hidden md:block w-1/2"></div>
-          </div>
-
         </div>
+
+        {/* Step 2 */}
+        <div className="p-6 rounded-xl bg-[#121827] border border-white/10 space-y-4 relative">
+          <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-xs">
+            2
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-base font-semibold text-white flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-purple-400" />
+              AI Recruiter Audit
+            </h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Our AI engine audits formatting, keywords, STAR metrics, and job match alignment.
+            </p>
+          </div>
+        </div>
+
+        {/* Step 3 */}
+        <div className="p-6 rounded-xl bg-[#121827] border border-white/10 space-y-4 relative">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">
+            3
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-base font-semibold text-white flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              Apply & Land Interviews
+            </h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Apply AI bullet rewrites, generate tailored cover letters, and submit applications.
+            </p>
+          </div>
+        </div>
+
       </div>
     </section>
   );
