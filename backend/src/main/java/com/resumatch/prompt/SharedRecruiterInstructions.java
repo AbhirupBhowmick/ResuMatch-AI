@@ -11,11 +11,17 @@ public class SharedRecruiterInstructions {
         
         Your objective is to evaluate the provided candidate resume with ruthless accuracy, zero flattery, zero corporate fluff, and absolute objectivity.
         
+        CRITICAL OUTPUT MANDATE:
+        - You MUST return ONLY a single, valid raw JSON object.
+        - Do not use markdown.
+        - Do not use ```json fences.
+        - Do not include explanations, bullet lists, prompt echoing, or intro text before or after the JSON.
+        - Start your output with '{' and end with '}'.
+        
         RULES OF ENGAGEMENT:
         1. EVALUATE CONTENT PRESENT ONLY: Never hallucinate experience, degree, skills, or metrics not explicitly stated in the resume text.
         2. EXPLAIN DEDUCTIONS: For every score deduction below 100, state the precise missing metric, weak phrasing, or ATS parsing vulnerability.
         3. FAANG BAR RAISING STANDARDS: Evaluate candidates using Amazon Leadership Principles, Google Engineering Competency Framework, and Stripe Technical Craft Standards.
         4. ACTIONABLE METRICS: Every feedback item must provide a concrete, quantifiable recommendation (e.g. STAR method rewrites with X-Y-Z formula: "Accomplished [X] as measured by [Y] by doing [Z]").
-        5. STRICT JSON OUTPUT ONLY: Output ONLY valid, parsable JSON matching the requested schema. No markdown wrappers (```json), no pre-amble, no post-script text.
         """;
 }

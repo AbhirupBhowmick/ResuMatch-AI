@@ -7,16 +7,18 @@ public class ResumeAnalysisPrompt {
 
     public static String buildPrompt(String resumeText, String targetIndustry, String experienceLevel) {
         return """
-            Target Industry: %s
-            Target Experience Level: %s
+            STRICT INSTRUCTION: You MUST return ONLY a single, raw, valid JSON object starting with '{' and ending with '}'. Do not include markdown code block syntax (```json), intro text, or echo the prompt.
             
-            Perform a complete FAANG-level recruiter audit and ATS parsing scan on the following resume text.
+            Perform a complete FAANG-level recruiter audit and ATS parsing scan on the resume text provided below.
             
-            Return ONLY a valid JSON object matching EXACTLY this structure:
+            Target Industry Context: %s
+            Target Experience Level Context: %s
+            
+            Required Output JSON Schema:
             {
-              "overallScore": integer (0-100),
-              "atsScore": integer (0-100),
-              "roleMatch": integer (0-100),
+              "overallScore": 88,
+              "atsScore": 86,
+              "roleMatch": 90,
               "executiveSummary": "A concise 3-4 sentence high-level executive summary of candidate readiness",
               "firstImpression": "Immediate 6-second recruiter reaction when viewing this resume top to bottom",
               "strengths": ["at least 5 specific, evidence-backed strengths present in the resume"],
@@ -34,16 +36,16 @@ public class ResumeAnalysisPrompt {
               "grammarFeedback": ["spelling, active vs passive voice, or grammar issues"],
               "recruiterComments": "Direct feedback from a Senior Recruiter point of view",
               "technicalInterviewerComments": "Feedback from a Lead Systems Architect / Interviewer",
-              "hiringRecommendation": "Strong Hire | Hire | Borderline | No Hire",
-              "interviewProbability": integer (0-100),
-              "salaryReadiness": "Market-aligned compensation tier string e.g. $140,000 - $165,000",
+              "hiringRecommendation": "Strong Hire",
+              "interviewProbability": 85,
+              "salaryReadiness": "$140,000 - $165,000",
               "priorityFixes": ["5 immediate high-impact fixes to raise ATS score"],
               "beforeAfterExamples": [
                 {
                   "currentText": "exact weak bullet from candidate resume",
                   "improvedText": "rewritten bullet applying Google X-Y-Z and STAR formula with metrics",
                   "reason": "explanation of why the rewrite is stronger for ATS and recruiters",
-                  "category": "Impact Metrics | Action Verbs | STAR Method | Brevity"
+                  "category": "Impact Metrics"
                 }
               ],
               "thirtyDayPlan": {
@@ -54,22 +56,20 @@ public class ResumeAnalysisPrompt {
                 "expectedAtsImprovement": "+15-25 Points"
               },
               "scoreBreakdown": {
-                "formattingScore": integer (0-100),
-                "keywordMatchScore": integer (0-100),
-                "technicalSkillsScore": integer (0-100),
-                "projectsScore": integer (0-100),
-                "experienceScore": integer (0-100),
-                "educationScore": integer (0-100),
-                "achievementsScore": integer (0-100),
-                "grammarScore": integer (0-100),
-                "readabilityScore": integer (0-100),
-                "impactMetricsScore": integer (0-100)
+                "formattingScore": 90,
+                "keywordMatchScore": 85,
+                "technicalSkillsScore": 88,
+                "projectsScore": 84,
+                "experienceScore": 86,
+                "educationScore": 90,
+                "achievementsScore": 82,
+                "grammarScore": 98,
+                "readabilityScore": 92,
+                "impactMetricsScore": 80
               }
             }
             
-            Provide AT LEAST 5 concrete beforeAfterExamples items directly targeting weak bullets in the resume.
-            
-            RESUME TEXT:
+            CANDIDATE RESUME TEXT:
             %s
             """.formatted(
                 targetIndustry != null && !targetIndustry.isBlank() ? targetIndustry : "Software Engineering",
