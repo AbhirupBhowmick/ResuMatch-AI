@@ -35,15 +35,6 @@ public class PremiumController {
         return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/flashcards")
-    public ResponseEntity<List<Map<String, Object>>> generateFlashcards(@RequestBody FlashcardRequest request) {
-        User user = userService.getCurrentUser();
-        subscriptionValidationService.validatePremiumFeature(user, SubscriptionTier.ACTIVE_HUNTER);
-        log.info("Flashcard generation requested by user: {}", user.getEmail());
-        List<Map<String, Object>> flashcards = geminiService.generateFlashcards(request.getJobDescription());
-        return ResponseEntity.ok(flashcards);
-    }
-
     @PostMapping("/cover-letter")
     public ResponseEntity<?> generateCoverLetter(@RequestBody CoverLetterRequest request) {
         User user = userService.getCurrentUser();
@@ -89,7 +80,7 @@ public class PremiumController {
     }
 
     /**
-     * E. Cover Letter PDF Generator — returns downloadable PDF.
+     * Cover Letter PDF Generator — returns downloadable PDF.
      */
     @PostMapping("/generate-pdf")
     public ResponseEntity<byte[]> generatePdf(@RequestBody Map<String, Object> request) {

@@ -1,134 +1,95 @@
+import { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { 
+  FileText, 
+  Sparkles, 
+  Copy, 
+  Check, 
+  Download, 
+  Building2, 
+  Briefcase, 
+  User as UserIcon, 
+  AlertTriangle 
+} from "lucide-react";
 
-interface CoverLetterData {
-  subject_line: string;
-  body_paragraphs: string[];
-}
-
-const CoverLetter = () => {
+export default function CoverLetter() {
   const [jobDescription, setJobDescription] = useState("");
-  const [resumeProfile, setResumeProfile] = useState("Senior Full Stack Engineer (Default)");
+  const [companyName, setCompanyName] = useState("");
+  const [targetRole, setTargetRole] = useState("");
+  const [hiringManager, setHiringManager] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [coverLetterData, setCoverLetterData] = useState<CoverLetterData | null>(null);
+  const [coverLetterData, setCoverLetterData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [userTier, setUserTier] = useState("FREE");
   const [copied, setCopied] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const navigate = useNavigate();
+
+  const userName = localStorage.getItem("user_name") || "Software Professional";
+  const userEmail = localStorage.getItem("user_email") || "user@resumatch.ai";
   const token = localStorage.getItem("token");
-  const userName = localStorage.getItem("user_name") || "Alex Rivera";
-  const userEmail = localStorage.getItem("user_email") || "alex.rivera@example.com";
 
-  /* ── Animated loading messages ── */
-  const loadingMessages = [
-    "Analyzing your resume profile...",
-    "Mapping skills to job requirements...",
-    "Writing persuasive intro...",
-    "Connecting your achievements...",
-    "Crafting a compelling narrative...",
-    "Polishing final draft...",
-  ];
-  const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
-
-  useEffect(() => {
-    if (!isLoading) return;
-    const interval = setInterval(() => {
-      setLoadingMsgIdx((prev) => (prev + 1) % loadingMessages.length);
-    }, 2200);
-    return () => clearInterval(interval);
-  }, [isLoading]);
-
-  /* ── Fetch user tier ── */
-  useEffect(() => {
-    if (!token) return;
-    (async () => {
-      try {
-        const resp = await axios.get("/api/v1/user/usage", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setUserTier(resp.data.tier);
-      } catch {
-        /* ignore */
-      }
-    })();
-  }, [token]);
-
-  const isProUser = ["PRO_ACHIEVER", "ELITE"].includes(userTier);
-
-  /* ── Generate ── */
   const handleGenerate = async () => {
-    if (!token) { navigate("/login"); return; }
-    if (!jobDescription.trim()) {
-      setError("Please provide a job description to get started.");
-      return;
-    }
-    if (!isProUser) {
-      setError("Cover Letter Generator requires Pro Achiever tier.");
+    if (!jobDescription.trim() || jobDescription.trim().length < 15) {
+      setError("Please provide a job description (at least 15 characters).");
       return;
     }
 
     setIsLoading(true);
     setError(null);
-    setCoverLetterData(null);
-    setLoadingMsgIdx(0);
 
     try {
       const response = await axios.post(
         "/api/v1/premium/cover-letter",
-        { jobDescription },
+        { 
+          jobDescription,
+          companyName: companyName || "Target Company",
+          targetRole: targetRole || "Target Role",
+          hiringManager: hiringManager || "Hiring Manager"
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // Ensure we hit the right object shape whether it returns data or data.data
-      setCoverLetterData(response.data.data || response.data);
+      setCoverLetterData(response.data);
     } catch (err: any) {
-      const msg =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        err.message;
-      if (msg?.includes("NO_RESUME_DATA")) {
-        setError("Please upload and analyze your resume on the Dashboard first.");
-      } else if (msg?.includes("INSUFFICIENT_CREDITS")) {
-        setError("This feature requires Pro Achiever tier. Please upgrade your plan.");
-      } else {
-        setError("Failed to generate cover letter. " + msg);
-      }
+      console.error(err);
+      setError(err.response?.data?.message || err.response?.data?.error || "Failed to generate cover letter. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  /* ── Copy ── */
   const handleCopy = () => {
     if (!coverLetterData) return;
-    const text = [
-      `RE: ${coverLetterData.subject_line}`,
-      "",
-      "Dear Hiring Manager,",
-      "",
-      ...coverLetterData.body_paragraphs,
-      "",
-      "Sincerely,",
-      userName,
-    ].join("\n\n");
-    navigator.clipboard.writeText(text);
+    const fullText = coverLetterData.fullCoverLetter || 
+      `RE: ${coverLetterData.subjectLine || "Application for " + (targetRole || "Role")}\n\n` +
+      `Dear ${hiringManager || "Hiring Manager"},\n\n` +
+      `${coverLetterData.openingParagraph || ""}\n\n` +
+      `${coverLetterData.bodyParagraph1 || ""}\n\n` +
+      `${coverLetterData.bodyParagraph2 || ""}\n\n` +
+      `${coverLetterData.closingParagraph || ""}\n\n` +
+      `Sincerely,\n${userName}`;
+
+    navigator.clipboard.writeText(fullText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  /* ── Download PDF ── */
   const handleDownloadPdf = async () => {
     if (!coverLetterData || !token) return;
     setIsDownloading(true);
     try {
+      const paragraphs = coverLetterData.bodyParagraphs || [
+        coverLetterData.openingParagraph,
+        coverLetterData.bodyParagraph1,
+        coverLetterData.bodyParagraph2,
+        coverLetterData.closingParagraph
+      ].filter(Boolean);
+
       const response = await axios.post(
         "/api/v1/premium/generate-pdf",
         {
-          subject_line: coverLetterData.subject_line,
-          body_paragraphs: coverLetterData.body_paragraphs,
+          subjectLine: coverLetterData.subjectLine || `Cover Letter for ${targetRole || "Role"}`,
+          bodyParagraphs: paragraphs,
           userName: userName,
         },
         {
@@ -140,307 +101,219 @@ const CoverLetter = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "My_Cover_Letter.pdf";
+      a.download = `Cover_Letter_${(targetRole || "Application").replace(/ /g, "_")}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err: any) {
-      console.error("PDF generation error:", err);
-      setError("Failed to download PDF. Please try again.");
+      console.error("PDF download error:", err);
+      setError("Failed to download PDF report. Please try copying the text instead.");
     } finally {
       setIsDownloading(false);
     }
   };
 
-  const today = new Date().toLocaleDateString("en-US", {
+  const todayStr = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 
   return (
-    <div className="bg-surface text-on-surface overflow-hidden min-h-screen font-body selection:bg-primary-container/30">
+    <div className="bg-[#0b0f17] text-zinc-100 min-h-screen font-sans flex">
       <Sidebar />
-      <Header title="Cover Letter Generator" />
+      <div className="flex-1 lg:ml-64 flex flex-col relative h-screen overflow-hidden">
+        <Header title="Cover Letter AI" />
 
-      <main className="ml-0 md:ml-64 pt-24 h-screen flex flex-col md:flex-row bg-surface">
-        {/* ═══════════ Left Panel: Input ═══════════ */}
-        <section className="w-full md:w-1/2 p-8 border-r border-outline-variant/10 flex flex-col gap-8 overflow-y-auto no-scrollbar pb-32">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-3xl font-black font-headline tracking-tight text-on-surface">
-              Cover Letter Generator
-            </h2>
-            <p className="text-on-surface-variant leading-relaxed">
-              Let AI craft a high-impact, tailored narrative for your next big role.
-            </p>
-          </div>
-
-          {/* Input Card */}
-          <div className="bg-surface-container-low/60 backdrop-blur-[12px] p-8 rounded-xl border-t border-outline-variant/20 flex flex-col gap-6">
-            <div className="flex flex-col gap-3">
-              <label className="font-headline font-semibold text-sm text-primary tracking-wider uppercase">
-                JOB DESCRIPTION
-              </label>
-              <textarea
-                className="w-full h-64 bg-surface-container-lowest border border-outline-variant/15 rounded-xl p-4 text-on-surface text-sm focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all resize-none placeholder:text-outline outline-none"
-                placeholder="Paste the full job description here..."
-                value={jobDescription}
-                onChange={(e) => { setJobDescription(e.target.value); setError(null); }}
-              />
-            </div>
+        <main className="flex-1 pt-20 px-4 md:px-8 pb-16 overflow-y-auto w-full relative">
+          <div className="max-w-6xl mx-auto space-y-8">
             
-            <div className="flex flex-col gap-3">
-              <label className="font-headline font-semibold text-sm text-primary tracking-wider uppercase">
-                SELECT RESUME PROFILE
-              </label>
-              <div className="relative group">
-                <select 
-                  className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 text-on-surface text-sm focus:border-primary/50 focus:ring-0 appearance-none cursor-pointer"
-                  value={resumeProfile}
-                  onChange={(e) => setResumeProfile(e.target.value)}
-                >
-                  <option>Senior Full Stack Engineer (Default)</option>
-                  <option>Product Manager - Tech Core</option>
-                  <option>UI/UX Designer Profile</option>
-                </select>
-                <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline pointer-events-none group-hover:text-primary transition-colors">expand_more</span>
+            {/* Header Title */}
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-medium">
+                <FileText className="w-3.5 h-3.5" />
+                <span>Tailored Application Narrative</span>
               </div>
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">Cover Letter Generator</h1>
+              <p className="text-zinc-400 text-sm">
+                Generate high-converting, recruiter-grade cover letters tailored to your target job posting.
+              </p>
             </div>
 
-            {/* Error */}
-            {error && (
-              <div className="bg-error-container/10 border border-error-container/20 rounded-xl p-4 flex items-start gap-3">
-                <span className="material-symbols-outlined text-error text-sm mt-0.5">error</span>
-                <p className="text-error text-sm font-medium">{error}</p>
-              </div>
-            )}
+            {/* Main Layout Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              
+              {/* LEFT INPUT PANEL */}
+              <div className="lg:col-span-5 space-y-5">
+                <div className="rounded-xl bg-[#121827] border border-white/10 p-6 space-y-4">
+                  <h3 className="text-sm font-semibold text-white">Application Details</h3>
 
-            {/* Generate Button */}
-            <button
-              onClick={handleGenerate}
-              disabled={isLoading}
-              className="w-full py-4 bg-primary-container text-on-primary-container disabled:opacity-70 disabled:cursor-not-allowed rounded-xl font-bold font-headline text-lg flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/10"
-            >
-              {isLoading ? (
-                <>
-                  <span className="material-symbols-outlined animate-spin">refresh</span>
-                  <span>✨ Crafting your narrative...</span>
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined">auto_awesome</span>
-                  Generate Magic Cover Letter
-                </>
-              )}
-            </button>
-          </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-medium text-zinc-400 mb-1 block">Target Company</label>
+                      <div className="relative">
+                        <Building2 className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-3" />
+                        <input 
+                          type="text" 
+                          placeholder="e.g. Stripe, Vercel, OpenAI"
+                          value={companyName}
+                          onChange={(e) => setCompanyName(e.target.value)}
+                          className="w-full bg-white/[0.03] border border-white/10 rounded-lg pl-9 pr-3.5 py-2 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-cyan-500/50"
+                        />
+                      </div>
+                    </div>
 
-          {/* Pro Lock State */}
-          {!isProUser && (
-            <div className="relative group overflow-hidden rounded-xl h-48 border border-outline-variant/15 bg-surface-container-low/50">
-              <div className="absolute inset-0 backdrop-blur-[2px] bg-slate-950/40 flex flex-col items-center justify-center gap-3 z-10">
-                <span
-                  className="material-symbols-outlined text-4xl text-primary"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  lock
-                </span>
-                <div className="text-center">
-                  <p className="font-headline font-bold text-on-surface">Pro Customizations</p>
-                  <p className="text-xs text-on-surface-variant">Unlock custom tones, character limits, and more.</p>
+                    <div>
+                      <label className="text-xs font-medium text-zinc-400 mb-1 block">Role Title</label>
+                      <div className="relative">
+                        <Briefcase className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-3" />
+                        <input 
+                          type="text" 
+                          placeholder="e.g. Senior Frontend Engineer"
+                          value={targetRole}
+                          onChange={(e) => setTargetRole(e.target.value)}
+                          className="w-full bg-white/[0.03] border border-white/10 rounded-lg pl-9 pr-3.5 py-2 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-cyan-500/50"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-medium text-zinc-400 mb-1 block">Hiring Manager (Optional)</label>
+                      <div className="relative">
+                        <UserIcon className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-3" />
+                        <input 
+                          type="text" 
+                          placeholder="e.g. Sarah Jenkins or Talent Team"
+                          value={hiringManager}
+                          onChange={(e) => setHiringManager(e.target.value)}
+                          className="w-full bg-white/[0.03] border border-white/10 rounded-lg pl-9 pr-3.5 py-2 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-cyan-500/50"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-medium text-zinc-400 mb-1 block">Job Description (JD)</label>
+                      <textarea 
+                        value={jobDescription}
+                        onChange={(e) => setJobDescription(e.target.value)}
+                        placeholder="Paste full target job description here..."
+                        className="w-full h-40 bg-white/[0.03] border border-white/10 rounded-lg p-3 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-cyan-500/50 resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  {error && (
+                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      <span>{error}</span>
+                    </div>
+                  )}
+
+                  <button 
+                    disabled={isLoading}
+                    onClick={handleGenerate}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-sm transition-all shadow-lg shadow-cyan-600/20 hover:scale-[1.01] active:scale-[0.99] cursor-pointer disabled:opacity-50"
+                  >
+                    {isLoading ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    <span>{isLoading ? "Crafting Narrative..." : "Generate Cover Letter"}</span>
+                  </button>
                 </div>
-                <div className="px-6 py-2 bg-primary/10 text-primary border border-primary/20 rounded-full font-headline font-bold text-sm">
-                  Pro Feature
-                </div>
               </div>
-              <div className="p-6 opacity-30 grayscale blur-sm flex flex-col gap-4">
-                <div className="h-2 w-3/4 bg-outline-variant rounded"></div>
-                <div className="h-2 w-1/2 bg-outline-variant rounded"></div>
-                <div className="h-2 w-2/3 bg-outline-variant rounded"></div>
-                <div className="h-2 w-full bg-outline-variant rounded"></div>
-              </div>
-            </div>
-          )}
-        </section>
 
-        {/* ═══════════ Right Panel: A4 Paper Preview ═══════════ */}
-        <section className="w-full md:w-1/2 bg-surface-container-low p-8 flex items-start justify-center overflow-y-auto no-scrollbar relative pb-32">
-          <div className="relative w-full flex flex-col items-center pt-8">
-            
-            {/* Preview Toolbar */}
-            {coverLetterData && (
-              <div className="absolute -top-4 right-0 flex gap-2 animate-[fadeIn_0.5s_ease-out] z-30">
-                <button
-                  onClick={handleCopy}
-                  className="flex items-center gap-2 bg-surface-container-high hover:bg-surface-bright px-4 py-2 rounded-lg text-sm font-headline font-medium text-on-surface transition-colors cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[18px]">
-                    {copied ? "check" : "content_copy"}
-                  </span>
-                  {copied ? "Copied!" : "Copy Text"}
-                </button>
-                <button
-                  onClick={handleDownloadPdf}
-                  disabled={isDownloading}
-                  className="flex items-center gap-2 bg-primary-fixed text-on-primary-fixed px-4 py-2 rounded-lg text-sm font-headline font-bold transition-colors hover:brightness-110 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <span className={`material-symbols-outlined text-[18px] ${isDownloading ? 'animate-spin' : ''}`}>
-                    {isDownloading ? "refresh" : "download"}
-                  </span>
-                  {isDownloading ? "Downloading..." : "Download PDF"}
-                </button>
-              </div>
-            )}
+              {/* RIGHT PREVIEW PANEL */}
+              <div className="lg:col-span-7 space-y-4">
+                {coverLetterData && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-zinc-400">Letter Preview</span>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={handleCopy}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 text-xs font-medium border border-white/10 transition-colors cursor-pointer"
+                      >
+                        {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copied ? "Copied!" : "Copy Text"}</span>
+                      </button>
 
-            {/* ── A4 Paper ── */}
-            <div
-              className="w-full max-w-[680px] bg-white rounded-xl shadow-2xl shadow-black/40 p-12 text-slate-900 flex flex-col gap-6 selection:bg-primary-container/40 overflow-hidden relative"
-              style={{ aspectRatio: "1 / 1.414", minHeight: "700px" }}
-            >
-              {/* Internal Toolbar (Shows if cover letter active, alternative position)  */}
-              {coverLetterData && (
-                <div className="absolute top-6 right-6 z-30">
-                    <button
+                      <button 
                         onClick={handleDownloadPdf}
                         disabled={isDownloading}
-                        className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-headline font-semibold text-slate-700 hover:bg-slate-100 transition-all disabled:opacity-50 cursor-pointer"
-                    >
-                    <span className={`material-symbols-outlined text-[18px] ${isDownloading ? 'animate-spin' : ''}`}>
-                        {isDownloading ? "refresh" : "download"}
-                    </span>
-                    {isDownloading ? "Downloading..." : "Download PDF"}
-                    </button>
-                </div>
-              )}
-
-              {/* ── Loading Skeleton ── */}
-              {isLoading && (
-                <div className="absolute inset-0 z-20 bg-white p-12 flex flex-col gap-6 animate-[fadeIn_0.5s_ease-out]">
-                  <div className="border-b border-slate-100 pb-8 flex flex-col gap-4">
-                    <div className="h-8 w-1/3 bg-slate-100 rounded"></div>
-                    <div className="h-4 w-1/2 bg-slate-100 rounded"></div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="h-4 w-1/4 bg-slate-100 rounded"></div>
-                    <div className="h-4 w-1/5 bg-slate-100 rounded"></div>
-                  </div>
-                  <div className="mt-8 flex flex-col gap-6">
-                    <div className="flex items-center gap-3">
-                      <span className="material-symbols-outlined text-primary animate-[spin_2s_linear_infinite]">
-                        auto_awesome
-                      </span>
-                      <p className="text-sm font-headline font-bold text-primary transition-opacity">
-                        {loadingMessages[loadingMsgIdx]}
-                      </p>
-                    </div>
-                    <div className="h-4 w-full bg-slate-50 rounded"></div>
-                    <div className="h-4 w-[90%] bg-slate-50 rounded"></div>
-                    <div className="h-4 w-[95%] bg-slate-50 rounded"></div>
-                    <div className="h-4 w-full bg-slate-50 rounded"></div>
-                    <div className="h-4 w-[40%] bg-slate-50 rounded"></div>
-                  </div>
-                </div>
-              )}
-
-              {/* ── Generated Content ── */}
-              {coverLetterData && !isLoading ? (
-                <div className="flex flex-col gap-6">
-                  {/* Header Info */}
-                  <div className="border-b border-slate-100 pb-8 hover:bg-slate-50/50 transition-colors p-2 -mx-2 rounded">
-                    <h3 className="text-2xl font-bold text-slate-900 font-headline">{userName}</h3>
-                    <p className="text-sm text-slate-500 font-body mt-1">San Francisco, CA | {userEmail} | 555-0123</p>
-                  </div>
-                  
-                  {/* Recipient Info */}
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">{today}</p>
-                    <p className="text-sm font-bold">Hiring Manager</p>
-                    <p className="text-sm text-slate-600">Company Name</p>
-                  </div>
-
-                  {/* Body */}
-                  <div className="space-y-4">
-                    <p className="text-sm font-bold mt-2 animate-[fadeIn_1s_ease-out]">
-                      RE: {coverLetterData.subject_line}
-                    </p>
-                    <p className="text-sm leading-relaxed text-slate-700 animate-[fadeIn_1.1s_ease-out]">
-                      Dear Hiring Manager,
-                    </p>
-
-                    {coverLetterData.body_paragraphs.map((para, i) => (
-                      <p
-                        key={i}
-                        className="text-sm leading-relaxed text-slate-700 hover:bg-slate-50 transition-colors"
-                        style={{
-                          animation: `fadeIn ${0.5 + i * 0.3}s ease-out both`,
-                          animationDelay: `${1.2 + i * 0.15}s`,
-                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
                       >
-                        {para}
-                      </p>
-                    ))}
-
-                    {/* Sign-off */}
-                    <div
-                      className="pt-8"
-                      style={{
-                        animation: `fadeIn 0.5s ease-out both`,
-                        animationDelay: `${1.2 + coverLetterData.body_paragraphs.length * 0.15 + 0.3}s`,
-                      }}
-                    >
-                      <p className="text-sm text-slate-700">Sincerely,</p>
-                      <p className="text-sm font-bold mt-2">{userName}</p>
+                        <Download className="w-3.5 h-3.5" />
+                        <span>{isDownloading ? "Downloading..." : "Download PDF"}</span>
+                      </button>
                     </div>
                   </div>
+                )}
+
+                <div className="rounded-xl bg-white text-slate-900 p-8 md:p-10 shadow-2xl min-h-[500px] border border-zinc-300 relative font-serif">
+                  {isLoading ? (
+                    <div className="space-y-4 animate-pulse">
+                      <div className="h-6 bg-slate-200 rounded w-1/3" />
+                      <div className="h-4 bg-slate-200 rounded w-1/4" />
+                      <div className="h-10 bg-slate-100 rounded w-full mt-6" />
+                      <div className="space-y-2 mt-6">
+                        <div className="h-4 bg-slate-100 rounded w-full" />
+                        <div className="h-4 bg-slate-100 rounded w-5/6" />
+                        <div className="h-4 bg-slate-100 rounded w-4/6" />
+                      </div>
+                    </div>
+                  ) : coverLetterData ? (
+                    <div className="space-y-6 text-sm leading-relaxed text-slate-800 font-sans">
+                      {/* Candidate Header */}
+                      <div className="border-b border-slate-200 pb-4">
+                        <h2 className="text-xl font-bold text-slate-900">{userName}</h2>
+                        <p className="text-xs text-slate-500">{userEmail} • {todayStr}</p>
+                      </div>
+
+                      {/* Recipient */}
+                      <div className="text-xs space-y-1 text-slate-600">
+                        <div className="font-semibold text-slate-900">{coverLetterData.recipient || hiringManager || "Hiring Manager"}</div>
+                        <div>{companyName || "Target Company"}</div>
+                      </div>
+
+                      {/* Subject Line */}
+                      <div className="font-bold text-slate-900">
+                        RE: {coverLetterData.targetRole || targetRole || "Application"} Position
+                      </div>
+
+                      {/* Body Paragraphs */}
+                      <div className="space-y-4 text-xs md:text-sm text-slate-700 leading-normal">
+                        <p>{coverLetterData.salutation || `Dear ${hiringManager || "Hiring Manager"},`}</p>
+                        <p>{coverLetterData.openingParagraph || coverLetterData.fullCoverLetter}</p>
+                        {coverLetterData.bodyParagraph1 && <p>{coverLetterData.bodyParagraph1}</p>}
+                        {coverLetterData.bodyParagraph2 && <p>{coverLetterData.bodyParagraph2}</p>}
+                        {coverLetterData.closingParagraph && <p>{coverLetterData.closingParagraph}</p>}
+                      </div>
+
+                      {/* Sign-off */}
+                      <div className="pt-4 text-xs font-medium text-slate-900">
+                        <div>Sincerely,</div>
+                        <div className="font-bold text-sm mt-1">{userName}</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-center p-12 space-y-3 font-sans">
+                      <FileText className="w-10 h-10 text-slate-300" />
+                      <div className="text-sm font-semibold text-slate-700">No Cover Letter Generated Yet</div>
+                      <p className="text-xs text-slate-500 max-w-xs">
+                        Enter your job details on the left and click "Generate Cover Letter" to craft your narrative.
+                      </p>
+                    </div>
+                  )}
                 </div>
-              ) : !isLoading ? (
-                /* ── Empty State ── */
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center animate-[fadeIn_0.5s_ease-out]">
-                  <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                    <span
-                      className="material-symbols-outlined text-slate-300 text-3xl"
-                    >
-                      description
-                    </span>
-                  </div>
-                  <h4 className="font-headline font-bold text-slate-400 text-lg">
-                    No Content Yet
-                  </h4>
-                  <p className="text-slate-400 text-sm max-w-xs mt-2">
-                    Paste a job description and click "Generate" to create a tailored cover letter.
-                  </p>
-                </div>
-              ) : null}
+              </div>
+
             </div>
 
-            {/* Bottom Paper Stack */}
-            <div className="w-[98%] h-2 bg-white/20 rounded-b-xl -mt-1 mx-auto hidden md:block"></div>
-            <div className="w-[96%] h-2 bg-white/10 rounded-b-xl -mt-1 mx-auto hidden md:block"></div>
           </div>
-        </section>
-      </main>
-
-      {/* Background Overlay */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-[-1]">
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary via-surface to-tertiary"></div>
+        </main>
       </div>
-
-      {/* Inline keyframes */}
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
     </div>
   );
-};
-
-export default CoverLetter;
+}

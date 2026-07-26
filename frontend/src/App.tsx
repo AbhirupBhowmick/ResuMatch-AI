@@ -5,20 +5,15 @@ import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Results from "./pages/Results";
-import InterviewPrep from "./pages/InterviewPrep";
-import Assessment from "./pages/Assessment";
-import AssessmentResult from "./pages/AssessmentResult";
-
 import CoverLetter from "./pages/CoverLetter";
 import Settings from "./pages/Settings";
-import JobTailor from "./pages/JobTailor";
+import JobMatch from "./pages/JobMatch";
 
 function AuthWatcher() {
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 1. Capture and persist tokens IMMEDATELY
     const params = new URLSearchParams(location.search);
     const urlToken = params.get("token");
     
@@ -32,12 +27,10 @@ function AuthWatcher() {
       if (urlEmail) localStorage.setItem("user_email", urlEmail);
       if (urlTier) localStorage.setItem("user_tier", urlTier);
       
-      // Navigate to dashboard and strip params from URL
       navigate("/dashboard", { replace: true });
       return;
     }
 
-    // 2. Track current path (ignore auth paths)
     if (!["/", "/login"].includes(location.pathname)) {
       localStorage.setItem("lastPath", location.pathname);
     }
@@ -45,7 +38,6 @@ function AuthWatcher() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    // 3. Auto-login redirect if on landing/login with token
     if (token && ["/", "/login"].includes(location.pathname)) {
       const lastPath = localStorage.getItem("lastPath");
       navigate(lastPath || "/dashboard", { replace: true });
@@ -61,7 +53,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const params = new URLSearchParams(location.search);
   const urlToken = params.get("token");
 
-  // If no token in storage AND no token in current URL params, redirect
   if (!token && !urlToken) {
     return <Navigate to="/login" replace />;
   }
@@ -70,7 +61,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   return (
-    <div className="dark min-h-screen bg-background text-foreground selection:bg-primary/30">
+    <div className="dark min-h-screen bg-[#0b0f17] text-zinc-100 selection:bg-indigo-500/30">
       <BrowserRouter>
         <AuthWatcher />
         <Routes>
@@ -82,12 +73,11 @@ function App() {
           <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/results" element={<ProtectedRoute><Results /></ProtectedRoute>} />
-          <Route path="/interview" element={<ProtectedRoute><InterviewPrep /></ProtectedRoute>} />
-          <Route path="/assessment" element={<ProtectedRoute><Assessment /></ProtectedRoute>} />
-          <Route path="/assessment-result" element={<ProtectedRoute><AssessmentResult /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-          <Route path="/job-tailor" element={<ProtectedRoute><JobTailor /></ProtectedRoute>} />
+          <Route path="/job-match" element={<ProtectedRoute><JobMatch /></ProtectedRoute>} />
+          <Route path="/job-tailor" element={<ProtectedRoute><JobMatch /></ProtectedRoute>} />
           <Route path="/cover-letter" element={<ProtectedRoute><CoverLetter /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
     </div>

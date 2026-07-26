@@ -7,9 +7,11 @@ public class CoverLetterPrompt {
 
     public static String buildPrompt(String resumeText, String jobDescription, String companyName, String targetRole) {
         return """
+            STRICT FORMAT MANDATE: You MUST return ONLY a single, raw, valid JSON object starting with '{' and ending with '}'. Do NOT include markdown code blocks (```json), intro text, or echo the prompt.
+            
             Write a recruiter-grade, high-converting cover letter for the candidate applying to %s for the role of %s.
             
-            Return ONLY a valid JSON object matching EXACTLY this structure:
+            Required Output JSON Schema:
             {
               "recipient": "Hiring Manager / Talent Acquisition Team",
               "companyName": "%s",
