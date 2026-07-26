@@ -26,7 +26,8 @@ public class GeminiService {
     private static final Logger logger = LoggerFactory.getLogger(GeminiService.class);
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private static final String MODEL = "gemini-2.5-flash";
+    @Value("${gemini.model:gemini-2.5-flash-lite}")
+    private String configuredModel;
 
     @Value("${gemini.api.key}")
     private String apiKey;
@@ -38,7 +39,7 @@ public class GeminiService {
             throw new GeminiAuthException("Gemini API Key is not configured.");
         }
         String maskedKey = apiKey.length() > 4 ? apiKey.substring(0, 4) + "..." : "****";
-        logger.info("Gemini Key Loaded: " + maskedKey + " using model: " + MODEL);
+        logger.info("Gemini Key Loaded: " + maskedKey + " using model: " + configuredModel);
     }
 
 
@@ -240,78 +241,100 @@ public class GeminiService {
         if (apiKey == null || apiKey.trim().isEmpty()) {
             throw new GeminiAuthException("Gemini API Key is missing.");
         }
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent?key=" + apiKey;
 
-        Map<String, Object> requestBody = new HashMap<>();
-        
-        if (systemInstruction != null) {
-            Map<String, Object> sysInst = new HashMap<>();
-            Map<String, Object> sysParts = new HashMap<>();
-            sysParts.put("text", systemInstruction);
-            sysInst.put("parts", List.of(sysParts));
-            requestBody.put("system_instruction", sysInst);
+        List<String> modelsToTry = new java.util.ArrayList<>();
+        if (configuredModel != null && !configuredModel.isBlank()) {
+            modelsToTry.add(configuredModel);
+        }
+        for (String fallback : List.of("gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-1.5-flash")) {
+            if (!modelsToTry.contains(fallback)) {
+                modelsToTry.add(fallback);
+            }
         }
 
-        Map<String, Object> contents = new HashMap<>();
-        Map<String, Object> parts = new HashMap<>();
-        parts.put("text", prompt);
-        contents.put("parts", List.of(parts));
-        requestBody.put("contents", List.of(contents));
+        String lastError = "ERROR_EMPTY_RESPONSE";
 
-        Map<String, Object> genConfig = new HashMap<>();
-        genConfig.put("response_mime_type", "application/json");
-        requestBody.put("generationConfig", genConfig);
+        for (String currentModel : modelsToTry) {
+            String url = "https://generativelanguage.googleapis.com/v1beta/models/" + currentModel + ":generateContent?key=" + apiKey;
 
-        // Safety Settings to prevent false positives
-        List<Map<String, Object>> safetySettings = List.of(
-            Map.of("category", "HARM_CATEGORY_HARASSMENT", "threshold", "BLOCK_NONE"),
-            Map.of("category", "HARM_CATEGORY_HATE_SPEECH", "threshold", "BLOCK_NONE"),
-            Map.of("category", "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold", "BLOCK_NONE"),
-            Map.of("category", "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold", "BLOCK_NONE")
-        );
-        requestBody.put("safetySettings", safetySettings);
+            Map<String, Object> requestBody = new HashMap<>();
+            
+            if (systemInstruction != null) {
+                Map<String, Object> sysInst = new HashMap<>();
+                Map<String, Object> sysParts = new HashMap<>();
+                sysParts.put("text", systemInstruction);
+                sysInst.put("parts", List.of(sysParts));
+                requestBody.put("system_instruction", sysInst);
+            }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+            Map<String, Object> contents = new HashMap<>();
+            Map<String, Object> parts = new HashMap<>();
+            parts.put("text", prompt);
+            contents.put("parts", List.of(parts));
+            requestBody.put("contents", List.of(contents));
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+            Map<String, Object> genConfig = new HashMap<>();
+            genConfig.put("response_mime_type", "application/json");
+            requestBody.put("generationConfig", genConfig);
 
-        try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
-            Map<String, Object> body = response.getBody();
-            if (body != null) {
-                if (body.containsKey("candidates")) {
-                    List<Map<String, Object>> candidates = (List<Map<String, Object>>) body.get("candidates");
-                    if (!candidates.isEmpty()) {
-                        Map<String, Object> firstCandidate = candidates.get(0);
-                        
-                        // Check for safety block
-                        if (firstCandidate.containsKey("finishReason") && "SAFETY".equals(firstCandidate.get("finishReason"))) {
-                           logger.error("Gemini response was blocked by safety filters.");
-                           return "ERROR_SAFETY_BLOCKED";
-                        }
+            List<Map<String, Object>> safetySettings = List.of(
+                Map.of("category", "HARM_CATEGORY_HARASSMENT", "threshold", "BLOCK_NONE"),
+                Map.of("category", "HARM_CATEGORY_HATE_SPEECH", "threshold", "BLOCK_NONE"),
+                Map.of("category", "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold", "BLOCK_NONE"),
+                Map.of("category", "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold", "BLOCK_NONE")
+            );
+            requestBody.put("safetySettings", safetySettings);
 
-                        if (firstCandidate.containsKey("content")) {
-                            Map<String, Object> content = (Map<String, Object>) firstCandidate.get("content");
-                            List<Map<String, Object>> responseParts = (List<Map<String, Object>>) content.get("parts");
-                            if (responseParts != null && !responseParts.isEmpty()) {
-                                return (String) responseParts.get(0).get("text");
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            try {
+                ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+                Map<String, Object> body = response.getBody();
+                if (body != null) {
+                    if (body.containsKey("candidates")) {
+                        List<Map<String, Object>> candidates = (List<Map<String, Object>>) body.get("candidates");
+                        if (!candidates.isEmpty()) {
+                            Map<String, Object> firstCandidate = candidates.get(0);
+                            
+                            if (firstCandidate.containsKey("finishReason") && "SAFETY".equals(firstCandidate.get("finishReason"))) {
+                               logger.error("Gemini response was blocked by safety filters on model {}.", currentModel);
+                               return "ERROR_SAFETY_BLOCKED";
+                            }
+
+                            if (firstCandidate.containsKey("content")) {
+                                Map<String, Object> content = (Map<String, Object>) firstCandidate.get("content");
+                                List<Map<String, Object>> responseParts = (List<Map<String, Object>>) content.get("parts");
+                                if (responseParts != null && !responseParts.isEmpty()) {
+                                    logger.info("Gemini API call succeeded using model: {}", currentModel);
+                                    return (String) responseParts.get(0).get("text");
+                                }
                             }
                         }
                     }
+                    if (body.containsKey("error")) {
+                        Map<String, Object> error = (Map<String, Object>) body.get("error");
+                        String errorMsg = String.valueOf(error.get("message"));
+                        logger.warn("Gemini API model {} returned error: {}", currentModel, errorMsg);
+                        lastError = "ERROR_API_" + errorMsg;
+                        if (errorMsg.contains("NOT_FOUND") || errorMsg.contains("404") || errorMsg.contains("not found")) {
+                            continue; // Try next model in fallback list
+                        }
+                        return lastError;
+                    }
                 }
-                if (body.containsKey("error")) {
-                    Map<String, Object> error = (Map<String, Object>) body.get("error");
-                    logger.error("Gemini API returned error: {}", error);
-                    return "ERROR_API_" + error.get("message");
+            } catch (Exception e) {
+                logger.warn("Gemini API call failed for model {}: {}", currentModel, e.getMessage());
+                lastError = "ERROR_EXCEPTION_" + e.getMessage();
+                if (e.getMessage() != null && (e.getMessage().contains("404") || e.getMessage().contains("NOT_FOUND") || e.getMessage().contains("not found"))) {
+                    continue; // Try next model in fallback list
                 }
             }
-            logger.error("Empty or invalid response from Gemini: {}", body);
-            return "ERROR_EMPTY_RESPONSE";
-        } catch (Exception e) {
-            logger.error("Gemini API Call Failed: {}", e.getMessage());
-            return "ERROR_EXCEPTION_" + e.getMessage();
         }
+
+        return lastError;
     }
 
     private String extractJson(String raw) {

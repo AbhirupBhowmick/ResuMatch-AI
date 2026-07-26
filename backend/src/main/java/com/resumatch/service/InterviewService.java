@@ -38,6 +38,9 @@ public class InterviewService {
     private final InterviewSessionRepository interviewSessionRepository;
     private final InterviewQuestionRepository interviewQuestionRepository;
 
+    @Value("${gemini.model:gemini-2.5-flash-lite}")
+    private String configuredModel;
+
     @Value("${gemini.api.key}")
     private String apiKey;
 
@@ -51,8 +54,15 @@ public class InterviewService {
         Optional<User> userOpt = userRepository.findByEmail(userEmail);
         User user = userOpt.orElseThrow(() -> new RuntimeException("User not found: " + userEmail));
 
-        String model = "gemini-1.5-flash";
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + apiKey;
+        List<String> modelsToTry = new java.util.ArrayList<>();
+        if (configuredModel != null && !configuredModel.isBlank()) {
+            modelsToTry.add(configuredModel);
+        }
+        for (String fallback : List.of("gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-1.5-flash")) {
+            if (!modelsToTry.contains(fallback)) {
+                modelsToTry.add(fallback);
+            }
+        }
 
         String prompt = "As a Senior Hiring Manager, identify exactly 3 potential gaps (red flags) in this resume relative to the following Job Description (JD) " +
                 "and generate EXACTLY 4 tough behavioral interview questions based on those gaps.\n" +
@@ -83,11 +93,12 @@ public class InterviewService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
         List<InterviewQuestionDto> generatedDtos = new ArrayList<>();
-        int maxRetries = 3;
-        int attempt = 0;
         boolean success = false;
 
-        while (attempt < maxRetries && !success) {
+        for (String currentModel : modelsToTry) {
+            if (success) break;
+            String url = "https://generativelanguage.googleapis.com/v1beta/models/" + currentModel + ":generateContent?key=" + apiKey;
+
             try {
                 ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
                 Map<String, Object> body = response.getBody();
@@ -105,14 +116,12 @@ public class InterviewService {
                             jsonText = jsonText.substring(startIdx, endIdx + 1);
                             generatedDtos = objectMapper.readValue(jsonText, new TypeReference<List<InterviewQuestionDto>>() {});
                             success = true;
-                        } else {
-                            logger.error("Attempt {}: Invalid JSON in Gemini response: {}", attempt + 1, jsonText);
+                            logger.info("Interview questions generated using model: {}", currentModel);
                         }
                     }
                 }
             } catch (Exception e) {
-                attempt++;
-                logger.warn("Attempt {} for Interview Prep failed: {} - {}", attempt, e.getClass().getSimpleName(), e.getMessage());
+                logger.warn("Model {} failed for Interview Prep: {} - {}", currentModel, e.getClass().getSimpleName(), e.getMessage());
             }
         }
 

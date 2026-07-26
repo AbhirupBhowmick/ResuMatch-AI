@@ -25,12 +25,22 @@ public class AssessmentService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @Value("${gemini.model:gemini-2.5-flash-lite}")
+    private String configuredModel;
+
     @Value("${gemini.api.key}")
     private String apiKey;
 
     public List<MCQQuestionDto> generateMCQs(String extractedText, String jobDescription, int questionCount) {
-        String model = "gemini-1.5-flash";
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + apiKey;
+        List<String> modelsToTry = new java.util.ArrayList<>();
+        if (configuredModel != null && !configuredModel.isBlank()) {
+            modelsToTry.add(configuredModel);
+        }
+        for (String fallback : List.of("gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-1.5-flash")) {
+            if (!modelsToTry.contains(fallback)) {
+                modelsToTry.add(fallback);
+            }
+        }
 
         String prompt = "You are a professional technical interviewer. Generate EXACTLY " + questionCount + " technical MCQs with 4 options each. The questions must strictly follow the Job Description (JD) and assess the technical gaps based on the Resume provided.\n" +
                 "Ensure all questions and explanations are complete, detailed sentences. Do not truncate any text.\n" +
@@ -60,11 +70,12 @@ public class AssessmentService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
         List<MCQQuestionDto> generatedDtos = new ArrayList<>();
-        int maxRetries = 3;
-        int attempt = 0;
         boolean success = false;
 
-        while (attempt < maxRetries && !success) {
+        for (String currentModel : modelsToTry) {
+            if (success) break;
+            String url = "https://generativelanguage.googleapis.com/v1beta/models/" + currentModel + ":generateContent?key=" + apiKey;
+
             try {
                 ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
                 Map<String, Object> body = response.getBody();
@@ -82,17 +93,12 @@ public class AssessmentService {
                             jsonText = jsonText.substring(startIdx, endIdx + 1);
                             generatedDtos = objectMapper.readValue(jsonText, new TypeReference<List<MCQQuestionDto>>() {});
                             success = true;
-                        } else {
-                            logger.error("Attempt {}: Invalid JSON in Gemini response: {}", attempt + 1, jsonText);
+                            logger.info("Assessment MCQs generated using model: {}", currentModel);
                         }
                     }
                 }
             } catch (Exception e) {
-                attempt++;
-                logger.warn("Attempt {} for Assessment failed: {} - {}", attempt, e.getClass().getSimpleName(), e.getMessage());
-                if (attempt >= maxRetries) {
-                    logger.error("Final attempt for Assessment failed. Using fallbacks.");
-                }
+                logger.warn("Model {} failed for Assessment: {} - {}", currentModel, e.getClass().getSimpleName(), e.getMessage());
             }
         }
 
