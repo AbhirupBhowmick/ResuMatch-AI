@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Lock, Sparkles, CheckCircle2, Award, AlertTriangle, ArrowRight, RotateCcw, ShieldCheck } from "lucide-react";
+import { Lock, Sparkles, CheckCircle2, Award, AlertTriangle, ArrowRight, RotateCcw, ShieldCheck, Terminal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function InteractiveScratchReport() {
@@ -15,6 +15,9 @@ export default function InteractiveScratchReport() {
   const [isHovering, setIsHovering] = useState(false);
   const [animatedScore, setAnimatedScore] = useState(0);
   const [activeSection, setActiveSection] = useState<number>(0); // 1: Summary, 2: Bullets, 3: Skills
+  const [visibleConsoleLogs, setVisibleConsoleLogs] = useState<string[]>([]);
+  const [visibleKeywords, setVisibleKeywords] = useState<string[]>([]);
+  const [isBulletTransformed, setIsBulletTransformed] = useState(false);
 
   // Initialize Canvas Surface
   const initCanvas = () => {
@@ -55,7 +58,7 @@ export default function InteractiveScratchReport() {
     return () => window.removeEventListener("resize", initCanvas);
   }, []);
 
-  // Handle Scratch Action with 115px Brush Radius
+  // Handle Scratch Action with 110px Brush Radius
   const scratch = (clientX: number, clientY: number) => {
     if (demoState !== 'locked') return;
 
@@ -70,10 +73,10 @@ export default function InteractiveScratchReport() {
 
     setMousePos({ x, y });
 
-    // Large 115px brush radius for 3-4 natural swipes
+    // 110px eraser brush
     ctx.globalCompositeOperation = "destination-out";
     ctx.beginPath();
-    ctx.arc(x, y, 115, 0, Math.PI * 2);
+    ctx.arc(x, y, 110, 0, Math.PI * 2);
     ctx.fill();
 
     checkProgress(ctx, canvas.width, canvas.height);
@@ -95,8 +98,8 @@ export default function InteractiveScratchReport() {
       const percent = Math.min(100, Math.round((clearPixels / (totalPixels / 32)) * 100));
       setScratchProgress(percent);
 
-      // Auto-dissolve at 20% scratch threshold
-      if (percent >= 20) {
+      // Auto-dissolve overlay at 18% scratch threshold
+      if (percent >= 18) {
         triggerCinematicSequence();
       }
     } catch (e) {
@@ -104,7 +107,7 @@ export default function InteractiveScratchReport() {
     }
   };
 
-  // Cinematic Sequence Transition
+  // Cinematic 3.5s Scanning Sequence Transition
   const triggerCinematicSequence = () => {
     setDemoState('unlocking');
 
@@ -112,46 +115,50 @@ export default function InteractiveScratchReport() {
       setDemoState('scanning');
       setActiveSection(1);
 
-      // Section highlight timers over 4.5 seconds
-      setTimeout(() => setActiveSection(2), 1500);
-      setTimeout(() => setActiveSection(3), 3000);
+      // Console logs & Section Highlights over 3.5 seconds
+      setTimeout(() => {
+        setVisibleConsoleLogs(prev => [...prev, "Reading Summary... ✓"]);
+        setVisibleKeywords(["Java"]);
+      }, 500);
 
-      // Live ATS Score Count-Up during scan (0 -> 88)
-      let current = 0;
-      const interval = setInterval(() => {
-        current += 2;
-        if (current >= 88) {
-          current = 88;
-          clearInterval(interval);
-        }
-        setAnimatedScore(current);
-      }, 95);
+      setTimeout(() => {
+        setActiveSection(2);
+        setIsBulletTransformed(true); // Live transformation of achievement bullet!
+        setVisibleConsoleLogs(prev => [...prev, "Extracting Skills... ✓", "Checking ATS Formatting... ✓"]);
+        setVisibleKeywords(prev => [...prev, "Spring Boot", "React"]);
+      }, 1200);
 
-      // Complete scanning after 4.5s
+      setTimeout(() => {
+        setActiveSection(3);
+        setVisibleConsoleLogs(prev => [...prev, "Comparing STAR Metrics... ✓", "Evaluating Impact Statements... ✓"]);
+        setVisibleKeywords(prev => [...prev, "PostgreSQL"]);
+      }, 2400);
+
+      // ATS Score step count-up: 0 -> 18 -> 36 -> 59 -> 74 -> 88
+      const scores = [0, 18, 36, 59, 74, 88];
+      scores.forEach((sc, i) => {
+        setTimeout(() => setAnimatedScore(sc), i * 500);
+      });
+
+      // Complete scan sequence at t = 3.5s
       setTimeout(() => {
         setDemoState('complete');
         setActiveSection(4);
-      }, 4500);
+        setVisibleConsoleLogs(prev => [...prev, "Generating Recruiter Verdict... ✓"]);
+        setVisibleKeywords(prev => [...prev, "Missing: Kubernetes"]); // Missing keyword appears LAST
+      }, 3500);
 
-    }, 500);
+    }, 400);
   };
 
-  const handleInstantUnlock = () => {
-    if (demoState !== 'locked') return;
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext("2d");
-      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-    setScratchProgress(100);
-    triggerCinematicSequence();
-  };
-
-  const handleReset = () => {
+  const handleReplayScan = () => {
     setDemoState('locked');
     setScratchProgress(0);
     setAnimatedScore(0);
     setActiveSection(0);
+    setVisibleConsoleLogs([]);
+    setVisibleKeywords([]);
+    setIsBulletTransformed(false);
     initCanvas();
   };
 
@@ -164,7 +171,7 @@ export default function InteractiveScratchReport() {
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      {/* Outer Ambient Glow */}
+      {/* Ambient Glow */}
       <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-cyan-500/20 rounded-2xl blur-xl opacity-75 pointer-events-none" />
 
       {/* Main Glass Workspace Box */}
@@ -175,13 +182,13 @@ export default function InteractiveScratchReport() {
           <div className="flex items-center gap-3">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all ${
               demoState === 'complete' 
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.3)]' 
                 : demoState === 'scanning'
                 ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400'
                 : 'bg-amber-500/10 border-amber-500/30 text-amber-400'
             }`}>
               {demoState === 'complete' ? (
-                <CheckCircle2 className="w-4 h-4" />
+                <CheckCircle2 className="w-4 h-4 animate-bounce" />
               ) : demoState === 'scanning' ? (
                 <Sparkles className="w-4 h-4 animate-spin" />
               ) : (
@@ -192,17 +199,12 @@ export default function InteractiveScratchReport() {
             <div>
               <div className="text-xs font-bold text-white tracking-tight flex items-center gap-2">
                 <span>🔒 Confidential Recruiter Evaluation</span>
-                {scratchProgress > 0 && demoState === 'locked' && (
-                  <span className="text-[10px] text-amber-400 font-mono bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                    {scratchProgress}% Unlocked
-                  </span>
-                )}
               </div>
               <p className="text-[11px] text-zinc-400">
                 {demoState === 'locked' && "This report is hidden because it contains the AI's evaluation. Drag to unlock."}
                 {demoState === 'unlocking' && "Unlocking confidential document..."}
-                {demoState === 'scanning' && "AI scanning engine performing full vertical resume analysis..."}
-                {demoState === 'complete' && "Executive Recruiter Audit Complete."}
+                {demoState === 'scanning' && "AI scanning engine analyzing document structure & STAR impact metrics..."}
+                {demoState === 'complete' && "Executive Recruiter Audit Complete"}
               </p>
             </div>
           </div>
@@ -211,7 +213,7 @@ export default function InteractiveScratchReport() {
           <div className="flex items-center gap-2 shrink-0">
             {demoState === 'locked' && (
               <button 
-                onClick={handleInstantUnlock}
+                onClick={handleReplayScan}
                 className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-all shadow-md shadow-indigo-600/20 cursor-pointer flex items-center gap-1.5"
               >
                 <Sparkles className="w-3.5 h-3.5" />
@@ -221,11 +223,11 @@ export default function InteractiveScratchReport() {
 
             {demoState === 'complete' && (
               <button 
-                onClick={handleReset}
-                className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 border border-white/10"
+                onClick={handleReplayScan}
+                className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 border border-white/10"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>Re-lock Demo</span>
+                <span>Replay AI Scan</span>
               </button>
             )}
           </div>
@@ -237,29 +239,34 @@ export default function InteractiveScratchReport() {
           {/* UNDERLYING SAMPLE RESUME & AUDIT REPORT */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left items-start">
             
-            {/* LEFT: SAMPLE RESUME DOCUMENT WITH FULL VERTICAL SCANNER */}
+            {/* LEFT: SAMPLE RESUME DOCUMENT WITH DEMO CANDIDATE BADGE */}
             <div className="lg:col-span-7 bg-[#101625] border border-white/10 rounded-xl p-5 relative overflow-hidden space-y-4 shadow-inner min-h-[420px]">
               
-              {/* FULL VERTICAL SCANNING BEAM WITH TRAILING GLOW */}
+              {/* FULL VERTICAL SCANNING BEAM (3.5s traversal) */}
               {demoState === 'scanning' && (
                 <motion.div 
                   initial={{ y: "-10%" }}
                   animate={{ y: "420%" }}
-                  transition={{ duration: 4.5, ease: "linear" }}
+                  transition={{ duration: 3.5, ease: "linear" }}
                   className="absolute left-0 right-0 z-30 pointer-events-none"
                 >
-                  <div className="h-12 bg-gradient-to-b from-cyan-400/0 via-cyan-400/20 to-transparent" />
+                  <div className="h-10 bg-gradient-to-b from-cyan-400/0 via-cyan-400/25 to-transparent" />
                   <div className="h-0.5 bg-cyan-400 shadow-[0_0_25px_#38bdf8] w-full" />
                 </motion.div>
               )}
 
-              {/* Candidate Info Header */}
+              {/* Candidate Info Header with Demo Candidate Badge */}
               <div className="border-b border-white/10 pb-3 space-y-1">
-                <div className="text-base font-bold text-white flex items-center justify-between">
-                  <span>Alex Rivera</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base font-bold text-white">Sample Resume</span>
+                    <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] font-mono">
+                      Demo Candidate
+                    </span>
+                  </div>
                   <span className="text-[10px] text-zinc-400 font-mono">Senior Full Stack Engineer</span>
                 </div>
-                <div className="text-xs text-zinc-400">alex.rivera@dev.io • San Francisco, CA</div>
+                <div className="text-xs text-zinc-400">candidate@resumatch-demo.io • San Francisco, CA</div>
               </div>
 
               {/* Professional Summary Section */}
@@ -280,7 +287,7 @@ export default function InteractiveScratchReport() {
               <div className="space-y-2">
                 <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Key Achievements (STAR Method)</div>
 
-                {/* Bullet 1 */}
+                {/* Bullet 1 - Live Transformation */}
                 <div className={`p-2.5 rounded text-xs transition-all duration-500 border flex items-start gap-2 ${
                   activeSection === 2 
                     ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-200 shadow-[0_0_15px_rgba(52,211,153,0.2)]' 
@@ -289,7 +296,11 @@ export default function InteractiveScratchReport() {
                     : 'bg-white/[0.02] border-white/5 text-zinc-400'
                 }`}>
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Spearheaded microservices migration using Spring Boot, reducing API response latency by 42% for 2M daily users.</span>
+                  <span>
+                    {isBulletTransformed 
+                      ? "Spearheaded microservices overhaul using Spring Boot, reducing API response latency by 42% for 2M daily users." 
+                      : "Built REST APIs for client web applications."}
+                  </span>
                 </div>
 
                 {/* Bullet 2 */}
@@ -313,7 +324,7 @@ export default function InteractiveScratchReport() {
 
             </div>
 
-            {/* RIGHT: SEQUENTIAL STAGGERED REVEALED CARDS */}
+            {/* RIGHT: SEQUENTIAL REVEALED CARDS & AI CONSOLE LOG */}
             <div className="lg:col-span-5 space-y-4">
               
               {/* Card 1: ATS Score Animated Counter */}
@@ -326,7 +337,7 @@ export default function InteractiveScratchReport() {
                 <div className="space-y-1">
                   <div className="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">Overall ATS Score</div>
                   <div className="text-3xl font-extrabold text-white">
-                    {animatedScore > 0 ? animatedScore : 88} <span className="text-sm font-normal text-zinc-400">/ 100</span>
+                    {animatedScore} <span className="text-sm font-normal text-zinc-400">/ 100</span>
                   </div>
                   <div className="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" />
@@ -338,7 +349,7 @@ export default function InteractiveScratchReport() {
                 </div>
               </motion.div>
 
-              {/* Card 2: Detected Skills Matrix */}
+              {/* Card 2: Detected Skills Matrix (One by one) */}
               <motion.div 
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: demoState !== 'locked' ? 1 : 0.3, y: 0 }}
@@ -346,18 +357,38 @@ export default function InteractiveScratchReport() {
                 className="p-4 rounded-xl bg-[#101625] border border-white/10 space-y-3"
               >
                 <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Detected Skill Keywords</div>
-                <div className="flex flex-wrap gap-1.5">
-                  <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">Java</span>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">Spring Boot</span>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">React</span>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">PostgreSQL</span>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3" /> Missing: Kubernetes
-                  </span>
+                <div className="flex flex-wrap gap-1.5 min-h-[28px]">
+                  {visibleKeywords.map((kw, i) => (
+                    <span 
+                      key={i} 
+                      className={`px-2 py-0.5 rounded text-[11px] font-medium border ${
+                        kw.includes("Missing")
+                          ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                          : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+                      }`}
+                    >
+                      {kw}
+                    </span>
+                  ))}
                 </div>
               </motion.div>
 
-              {/* Card 3: Full Recruiter Verdict (DELAYED UNTIL SCAN COMPLETES) */}
+              {/* FLOATING AI CONSOLE LOG BOX */}
+              {demoState === 'scanning' && (
+                <div className="p-3 rounded-xl bg-[#0a0e1a] border border-cyan-500/20 text-xs font-mono space-y-1 text-cyan-300">
+                  <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 border-b border-white/10 pb-1 mb-1">
+                    <Terminal className="w-3 h-3 text-cyan-400" />
+                    <span>AI Console Analysis Log</span>
+                  </div>
+                  {visibleConsoleLogs.map((log, idx) => (
+                    <div key={idx} className="text-[11px] text-zinc-300 font-mono flex items-center justify-between">
+                      <span>{log}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Card 3: Full Recruiter Verdict (DELAYED UNTIL SCAN COMPLETES AT 3.5s) */}
               <AnimatePresence>
                 {demoState === 'complete' && (
                   <motion.div 
@@ -406,10 +437,25 @@ export default function InteractiveScratchReport() {
             />
           )}
 
+          {/* LIVE SCRATCH PROGRESS RING (TOP-RIGHT CORNER OF SCRATCH CARD) */}
+          {demoState === 'locked' && (
+            <div className="absolute top-4 right-4 z-30 flex items-center gap-2 bg-[#0c1220]/90 border border-white/10 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-mono">
+              <div className="relative w-5 h-5 flex items-center justify-center">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                  <path className="text-white/10" strokeWidth="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path className="text-cyan-400 transition-all duration-300" strokeDasharray={`${scratchProgress * 5.5}, 100`} strokeWidth="4" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+              </div>
+              <span className="text-[11px] font-semibold text-zinc-200">
+                {scratchProgress >= 18 ? "AI Report Unlocked" : `AI Decryption ${scratchProgress}%`}
+              </span>
+            </div>
+          )}
+
           {/* GLOWING CIRCULAR BRUSH CURSOR FOLLOWING MOUSE */}
           {demoState === 'locked' && isHovering && (
             <div 
-              className="absolute w-28 h-28 rounded-full border border-cyan-400/50 bg-cyan-400/10 blur-sm pointer-events-none z-25 -translate-x-1/2 -translate-y-1/2 shadow-[0_0_25px_#38bdf8]"
+              className="absolute w-28 h-28 rounded-full border border-cyan-400/60 bg-cyan-400/15 blur-sm pointer-events-none z-25 -translate-x-1/2 -translate-y-1/2 shadow-[0_0_30px_#38bdf8]"
               style={{ left: `${mousePos.x}px`, top: `${mousePos.y}px` }}
             />
           )}
@@ -422,7 +468,7 @@ export default function InteractiveScratchReport() {
             <motion.div 
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
               className="mt-6 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-indigo-500/10 p-5 rounded-xl border border-indigo-500/20"
             >
               <div className="text-left space-y-0.5">

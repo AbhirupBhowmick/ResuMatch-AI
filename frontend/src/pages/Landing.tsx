@@ -1,20 +1,17 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Sparkles, ArrowRight, ShieldCheck, FileSearch, Target, FileText } from "lucide-react";
 import Features from "../components/Features";
 import HowItWorks from "../components/HowItWorks";
 import InteractiveScratchReport from "../components/InteractiveScratchReport";
-import VideoModal from "../components/VideoModal";
 import DotField from "../components/ui/DotField";
 
 export default function Landing() {
-  const [isDemoOpen, setIsDemoOpen] = useState(false);
   const token = localStorage.getItem("token");
 
   return (
     <div className="bg-[#090B14] text-zinc-100 selection:bg-indigo-500/30 overflow-x-hidden min-h-screen relative font-sans">
       
-      {/* Interactive Dot Field Background (Kept intact as required) */}
+      {/* Interactive Dot Field Background */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-60">
         <DotField
           dotRadius={1.5}
@@ -84,22 +81,15 @@ export default function Landing() {
               Analyze resumes, compare them against job descriptions, and generate tailored cover letters in one intelligent workspace.
             </p>
 
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+            {/* Single Primary CTA */}
+            <div className="flex justify-center pt-2">
               <Link 
                 to={token ? "/dashboard" : "/login"} 
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition-all shadow-lg shadow-indigo-600/30 hover:scale-[1.02] active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition-all shadow-lg shadow-indigo-600/30 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <span>Analyze Resume</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
-
-              <button 
-                onClick={() => setIsDemoOpen(true)}
-                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 border border-white/10 font-medium text-sm transition-all cursor-pointer"
-              >
-                View Demo
-              </button>
             </div>
 
             {/* Trust Bar below Hero */}
@@ -175,8 +165,6 @@ export default function Landing() {
         </footer>
 
       </div>
-
-      <VideoModal isOpen={isDemoOpen} onClose={() => setIsDemoOpen(false)} />
     </div>
   );
 }
