@@ -38,7 +38,7 @@ public class InterviewService {
     private final InterviewSessionRepository interviewSessionRepository;
     private final InterviewQuestionRepository interviewQuestionRepository;
 
-    @Value("${gemini.model:gemini-2.5-flash-lite}")
+    @Value("${gemini.model:${GEMINI_MODEL:gemini-2.5-flash-lite}}")
     private String configuredModel;
 
     @Value("${gemini.api.key}")
@@ -58,7 +58,7 @@ public class InterviewService {
         if (configuredModel != null && !configuredModel.isBlank()) {
             modelsToTry.add(configuredModel);
         }
-        for (String fallback : List.of("gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-1.5-flash")) {
+        for (String fallback : List.of("gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-2.0-flash-lite")) {
             if (!modelsToTry.contains(fallback)) {
                 modelsToTry.add(fallback);
             }

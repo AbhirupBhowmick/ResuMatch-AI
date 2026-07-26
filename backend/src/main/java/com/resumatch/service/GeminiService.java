@@ -29,7 +29,7 @@ public class GeminiService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final KeywordEngineService keywordEngineService;
 
-    @Value("${gemini.model:gemini-2.5-flash-lite}")
+    @Value("${gemini.model:${GEMINI_MODEL:gemini-2.5-flash-lite}}")
     private String configuredModel;
 
     @Value("${gemini.api.key}")
@@ -46,7 +46,7 @@ public class GeminiService {
             throw new GeminiAuthException("Gemini API Key is not configured.");
         }
         String maskedKey = apiKey.length() > 4 ? apiKey.substring(0, 4) + "..." : "****";
-        logger.info("Gemini Key Loaded: " + maskedKey + " using model: " + configuredModel);
+        logger.info("Gemini Service Initialized. Key: {}, Configured Model: {}", maskedKey, configuredModel);
     }
 
     // ===== 1. RECRUITER-GRADE RESUME ANALYSIS =====
@@ -235,7 +235,7 @@ public class GeminiService {
         if (configuredModel != null && !configuredModel.isBlank()) {
             modelsToTry.add(configuredModel);
         }
-        for (String fallback : List.of("gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-1.5-flash")) {
+        for (String fallback : List.of("gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-2.0-flash-lite")) {
             if (!modelsToTry.contains(fallback)) {
                 modelsToTry.add(fallback);
             }
@@ -245,6 +245,7 @@ public class GeminiService {
 
         for (String currentModel : modelsToTry) {
             String url = "https://generativelanguage.googleapis.com/v1beta/models/" + currentModel + ":generateContent?key=" + apiKey;
+            logger.info("Sending request to Gemini API. Model: {}", currentModel);
 
             Map<String, Object> requestBody = new HashMap<>();
             

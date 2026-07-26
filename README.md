@@ -108,7 +108,7 @@ ResuMatch AI/
 | **Frontend** | React 19, TypeScript, Vite, Tailwind CSS v4, Framer Motion, Recharts, Canvas-Confetti, Axios, Lucide Icons |
 | **Backend** | Java 21, Spring Boot 3.4.2, Spring Security, JPA Hibernate, Apache Tika, iText PDF, Lombok, Maven |
 | **Database** | PostgreSQL (Neon serverless cloud) / H2 in-memory |
-| **API / Services** | Google Gemini API (model: `gemini-2.5-flash`), Google OAuth 2.0 |
+| **API / Services** | Google Gemini API (model: `gemini-2.5-flash-lite`), Google OAuth 2.0 |
 
 ---
 
