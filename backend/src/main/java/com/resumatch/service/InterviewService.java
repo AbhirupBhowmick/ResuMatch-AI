@@ -37,89 +37,38 @@ public class InterviewService {
     private final UserRepository userRepository;
     private final InterviewSessionRepository interviewSessionRepository;
     private final InterviewQuestionRepository interviewQuestionRepository;
+    private final GeminiService geminiService;
 
-    @Value("${gemini.model:${GEMINI_MODEL:gemini-2.5-flash-lite}}")
-    private String configuredModel;
-
-    @Value("${gemini.api.key}")
-    private String apiKey;
-
-    public InterviewService(UserRepository userRepository, InterviewSessionRepository interviewSessionRepository, InterviewQuestionRepository interviewQuestionRepository) {
+    public InterviewService(UserRepository userRepository,
+                            InterviewSessionRepository interviewSessionRepository,
+                            InterviewQuestionRepository interviewQuestionRepository,
+                            GeminiService geminiService) {
         this.userRepository = userRepository;
         this.interviewSessionRepository = interviewSessionRepository;
         this.interviewQuestionRepository = interviewQuestionRepository;
+        this.geminiService = geminiService;
     }
 
     public List<InterviewQuestionDto> generateInterviewQuestions(String userEmail, String extractedText, String jobDescription) {
         Optional<User> userOpt = userRepository.findByEmail(userEmail);
         User user = userOpt.orElseThrow(() -> new RuntimeException("User not found: " + userEmail));
 
-        List<String> modelsToTry = new java.util.ArrayList<>();
-        if (configuredModel != null && !configuredModel.isBlank()) {
-            modelsToTry.add(configuredModel);
-        }
-        for (String fallback : List.of("gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-2.0-flash-lite")) {
-            if (!modelsToTry.contains(fallback)) {
-                modelsToTry.add(fallback);
-            }
-        }
-
         String systemInstruction = com.resumatch.prompt.SharedRecruiterInstructions.SYSTEM_INSTRUCTION;
         String prompt = com.resumatch.prompt.InterviewPrompt.buildPrompt(extractedText, jobDescription);
-
-        Map<String, Object> requestBody = new HashMap<>();
-        Map<String, Object> sysInst = new HashMap<>();
-        Map<String, Object> sysParts = new HashMap<>();
-        sysParts.put("text", systemInstruction);
-        sysInst.put("parts", List.of(sysParts));
-        requestBody.put("system_instruction", sysInst);
-
-        Map<String, Object> contents = new HashMap<>();
-        Map<String, Object> parts = new HashMap<>();
-        parts.put("text", prompt);
-        contents.put("parts", List.of(parts));
-        requestBody.put("contents", List.of(contents));
-
-        Map<String, Object> generationConfig = new HashMap<>();
-        generationConfig.put("temperature", 0.7);
-        generationConfig.put("maxOutputTokens", 2048);
-        requestBody.put("generationConfig", generationConfig);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
         List<InterviewQuestionDto> generatedDtos = new ArrayList<>();
         boolean success = false;
 
-        for (String currentModel : modelsToTry) {
-            if (success) break;
-            String url = "https://generativelanguage.googleapis.com/v1beta/models/" + currentModel + ":generateContent?key=" + apiKey;
-
-            try {
-                ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
-                Map<String, Object> body = response.getBody();
-                if (body != null && body.containsKey("candidates")) {
-                    List<Map<String, Object>> candidates = (List<Map<String, Object>>) body.get("candidates");
-                    if (!candidates.isEmpty()) {
-                        Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
-                        List<Map<String, Object>> responseParts = (List<Map<String, Object>>) content.get("parts");
-                        String jsonText = (String) responseParts.get(0).get("text");
-                        
-                        int startIdx = jsonText.indexOf("[");
-                        int endIdx = jsonText.lastIndexOf("]");
-                        
-                        if (startIdx != -1 && endIdx != -1 && endIdx > startIdx) {
-                            jsonText = jsonText.substring(startIdx, endIdx + 1);
-                            generatedDtos = objectMapper.readValue(jsonText, new TypeReference<List<InterviewQuestionDto>>() {});
-                            success = true;
-                            logger.info("Interview questions generated using model: {}", currentModel);
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                logger.warn("Model {} failed for Interview Prep: {} - {}", currentModel, e.getClass().getSimpleName(), e.getMessage());
+        try {
+            String rawResponse = geminiService.executeGeminiQuery(prompt, systemInstruction);
+            String jsonText = geminiService.extractJsonArray(rawResponse);
+            if (jsonText != null) {
+                generatedDtos = objectMapper.readValue(jsonText, new TypeReference<List<InterviewQuestionDto>>() {});
+                success = true;
+                logger.info("Interview questions generated successfully via GeminiService.");
             }
+        } catch (Exception e) {
+            logger.warn("Interview prep generation via GeminiService failed: {}", e.getMessage());
         }
 
         if (!success) {
