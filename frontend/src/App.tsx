@@ -76,6 +76,7 @@ function App() {
           <Route path="/job-match" element={<ProtectedRoute><JobMatch /></ProtectedRoute>} />
           <Route path="/job-tailor" element={<ProtectedRoute><JobMatch /></ProtectedRoute>} />
           <Route path="/cover-letter" element={<ProtectedRoute><CoverLetter /></ProtectedRoute>} />
+          <Route path="/history" element={<ProtectedRoute><Results /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

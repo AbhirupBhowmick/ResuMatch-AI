@@ -35,7 +35,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         User user = userRepository.findByEmail(email).orElseThrow();
         String token = jwtUtils.generateJwtToken(authentication);
 
-        String baseUrl = resolveFrontendUrl(request);
+        String baseUrl = resolveFrontendUrl(request).replaceAll("/$", "");
 
         String targetUrl = UriComponentsBuilder.fromUriString(baseUrl + "/dashboard")
                 .queryParam("token", token)

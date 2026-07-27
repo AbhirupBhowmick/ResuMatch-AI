@@ -24,16 +24,26 @@ export default function Login() {
       setEmail(savedEmail);
       setRememberMe(true);
     }
+    // Background health check to wake up Render backend on page mount
+    axios.get("/api/health").catch(() => {});
   }, []);
 
-  const handleGoogleAuth = () => {
+  const handleGoogleAuth = async () => {
     setGoogleLoading(true);
+    setErrorMsg("");
     const rawUrl = import.meta.env.VITE_API_URL || 'https://resumatch-ai-74wq.onrender.com';
     const envUrl = (rawUrl.trim() === '' || rawUrl.includes('railway.app')) 
       ? 'https://resumatch-ai-74wq.onrender.com' 
       : rawUrl;
-    const baseUrl = envUrl.startsWith('http') ? envUrl : `https://${envUrl}`;
-    window.location.href = `${baseUrl}/oauth2/authorization/google`;
+    const formattedUrl = envUrl.startsWith('http') ? envUrl : `https://${envUrl}`;
+    const baseUrl = formattedUrl.replace(/\/+$/, '');
+
+    try {
+      // Pre-warm Render backend before top-level browser redirect
+      await axios.get("/api/health", { timeout: 15000 }).catch(() => {});
+    } finally {
+      window.location.href = `${baseUrl}/oauth2/authorization/google`;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,7 +59,7 @@ export default function Login() {
 
     try {
       if (isLogin) {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL || ''}/api/auth/login`, { email, password }, { withCredentials: true });
+        const response = await axios.post("/api/v1/auth/login", { email, password }, { withCredentials: true });
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user_email", email);
         localStorage.setItem("user_name", response.data.name || email.split('@')[0]);
@@ -64,9 +74,9 @@ export default function Login() {
         const lastPath = localStorage.getItem("lastPath");
         navigate(lastPath || "/dashboard");
       } else {
-        await axios.post(`${import.meta.env.VITE_API_URL || ''}/api/auth/register`, { name, email, password }, { withCredentials: true });
+        await axios.post("/api/v1/auth/register", { name, email, password }, { withCredentials: true });
         
-        const loginResponse = await axios.post(`${import.meta.env.VITE_API_URL || ''}/api/auth/login`, { email, password }, { withCredentials: true });
+        const loginResponse = await axios.post("/api/v1/auth/login", { email, password }, { withCredentials: true });
         localStorage.setItem("token", loginResponse.data.token);
         localStorage.setItem("user_email", email);
         localStorage.setItem("user_name", loginResponse.data.name || name);
@@ -79,8 +89,12 @@ export default function Login() {
         navigate("/dashboard");
       }
     } catch (err: any) {
-      const msg = err.response?.data?.message || err.response?.data || err.message;
-      setErrorMsg(msg || "Authentication failed. Please check your credentials.");
+      if (err.code === "ERR_NETWORK" || err.message === "Network Error" || !err.response) {
+        setErrorMsg("Server is waking up (Render cold start). Please try signing in again in a few seconds.");
+      } else {
+        const msg = err.response?.data?.message || err.response?.data || err.message;
+        setErrorMsg(typeof msg === 'string' ? msg : "Authentication failed. Please check your credentials.");
+      }
     } finally {
       setLoading(false);
     }
