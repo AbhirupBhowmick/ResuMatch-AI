@@ -89,6 +89,29 @@ public class ResumeController {
         }
     }
 
+    @PostMapping("/chat")
+    public ResponseEntity<?> chatWithResume(@RequestBody Map<String, String> request) {
+        try {
+            User user = userService.getCurrentUser();
+            String query = request.get("query");
+            if (query == null || query.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Query parameter is required"));
+            }
+
+            Optional<AnalysisResult> latest = analysisService.getLatestAnalysis();
+            String resumeText = latest.map(AnalysisResult::getExtractedText).orElse(null);
+            if (resumeText == null || resumeText.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "No analyzed resume found. Please upload a resume first."));
+            }
+
+            Map<String, Object> response = geminiService.chatWithResume(resumeText, query);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Resume Chat process failed", e);
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/export-pdf")
     public ResponseEntity<byte[]> exportPdf() {
         User user = userService.getCurrentUser();

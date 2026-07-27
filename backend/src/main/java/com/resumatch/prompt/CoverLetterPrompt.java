@@ -7,21 +7,18 @@ public class CoverLetterPrompt {
 
     public static String buildPrompt(String resumeText, String jobDescription, String companyName, String targetRole) {
         return """
-            STRICT FORMAT MANDATE: You MUST return ONLY a single, raw, valid JSON object starting with '{' and ending with '}'. Do NOT include markdown code blocks (```json), intro text, or echo the prompt.
-            
-            Write a recruiter-grade, high-converting cover letter for the candidate applying to %s for the role of %s.
-            
-            Required Output JSON Schema:
+            Write a recruiter-grade cover letter for candidate applying to %s for role %s.
+            Return ONLY raw JSON matching schema:
             {
-              "recipient": "Hiring Manager / Talent Acquisition Team",
+              "recipient": "Hiring Manager",
               "companyName": "%s",
               "targetRole": "%s",
               "salutation": "Dear Hiring Manager,",
-              "openingParagraph": "Engaging hook showcasing candidate alignment with company mission and role requirements",
-              "bodyParagraph1": "Highlight of key technical achievements and metrics relevant to the job description",
-              "bodyParagraph2": "Demonstration of leadership, problem-solving, and domain expertise matching company goals",
-              "closingParagraph": "Strong call to action expressing enthusiasm for an interview",
-              "fullCoverLetter": "Complete formatted cover letter combining all paragraphs with proper line breaks"
+              "openingParagraph": "Engaging hook showcasing candidate alignment",
+              "bodyParagraph1": "Key technical achievements and metrics relevant to job",
+              "bodyParagraph2": "Leadership and domain expertise matching goals",
+              "closingParagraph": "Call to action expressing enthusiasm for interview",
+              "fullCoverLetter": "Complete formatted cover letter"
             }
             
             JOB DESCRIPTION:

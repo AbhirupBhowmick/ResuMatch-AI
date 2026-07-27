@@ -18,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
@@ -30,63 +31,29 @@ public class GeminiService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final KeywordEngineService keywordEngineService;
 
-    @Value("${gemini.model:${GEMINI_MODEL:gemini-2.5-flash-lite}}")
+    @Value("${gemini.model:${GEMINI_MODEL:gemini-3.1-flash-lite}}")
     private String configuredModel;
 
-    @Value("${gemini.api.key}")
+    @Value("${gemini.api.key:}")
     private String apiKey;
 
     public GeminiService(KeywordEngineService keywordEngineService) {
         this.keywordEngineService = keywordEngineService;
     }
 
-    private volatile List<String> cachedSupportedModels = null;
-    private volatile long lastModelFetchTime = 0;
-
     @PostConstruct
     public void init() {
+        String modelName = getEffectiveModel();
         if (apiKey == null || apiKey.trim().isEmpty()) {
-            logger.error("Gemini API Key is MISSING!");
-            throw new GeminiAuthException("Gemini API Key is not configured.");
+            logger.warn("Gemini Service Initialized. Target Model: {}. WARNING: API Key is missing (GEMINI_API_KEY). Set it for live AI generation.", modelName);
+            return;
         }
         String maskedKey = apiKey.length() > 4 ? apiKey.substring(0, 4) + "..." : "****";
-        logger.info("Gemini Service Initialized. Key: {}, Configured Model: {}", maskedKey, configuredModel);
+        logger.info("Gemini Service Initialized. Key: {}, Production Model: {}", maskedKey, modelName);
     }
 
-    public List<String> fetchSupportedModels() {
-        if (apiKey == null || apiKey.trim().isEmpty()) {
-            return Collections.emptyList();
-        }
-        long now = System.currentTimeMillis();
-        if (cachedSupportedModels != null && (now - lastModelFetchTime < 3600000)) { // Cache for 1 hour
-            return cachedSupportedModels;
-        }
-        String listUrl = "https://generativelanguage.googleapis.com/v1beta/models?key=" + apiKey;
-        try {
-            ResponseEntity<Map> response = restTemplate.getForEntity(listUrl, Map.class);
-            Map<String, Object> body = response.getBody();
-            if (body != null && body.containsKey("models")) {
-                List<Map<String, Object>> modelsList = (List<Map<String, Object>>) body.get("models");
-                List<String> validModels = new ArrayList<>();
-                for (Map<String, Object> m : modelsList) {
-                    List<String> methods = (List<String>) m.get("supportedGenerationMethods");
-                    if (methods != null && methods.contains("generateContent")) {
-                        String rawName = (String) m.get("name");
-                        if (rawName != null) {
-                            String modelName = rawName.replace("models/", "");
-                            validModels.add(modelName);
-                        }
-                    }
-                }
-                logger.info("Google ModelService ListModels returned supported generateContent models: {}", validModels);
-                cachedSupportedModels = validModels;
-                lastModelFetchTime = now;
-                return validModels;
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to fetch models dynamically from ListModels API: {}", e.getMessage());
-        }
-        return Collections.emptyList();
+    private String getEffectiveModel() {
+        return (configuredModel != null && !configuredModel.isBlank()) ? configuredModel : "gemini-3.1-flash-lite";
     }
 
     // ===== 1. RECRUITER-GRADE RESUME ANALYSIS =====
@@ -96,7 +63,7 @@ public class GeminiService {
             throw new IllegalArgumentException("Resume text is empty. Please upload a valid PDF or DOCX file.");
         }
 
-        logger.info("Analyzing resume for industry: {}. Experience: {}. Text length: {}", industry, experienceLevel, parsedText.length());
+        logger.info("Feature: RESUME_ANALYSIS | Target Model: {} | Text Length: {}", getEffectiveModel(), parsedText.length());
 
         String systemInstruction = SharedRecruiterInstructions.SYSTEM_INSTRUCTION;
         String prompt = ResumeAnalysisPrompt.buildPrompt(parsedText, industry, experienceLevel);
@@ -125,9 +92,8 @@ public class GeminiService {
                     return response;
                 }
             }
-            logger.warn("Raw Gemini AI response was not parsable JSON. Creating fallback structured response based on Keyword Engine.");
         } catch (Exception e) {
-            logger.error("Error parsing Gemini API JSON response: {}", e.getMessage());
+            logger.error("Resume Analysis AI failed: {}", e.getMessage());
         }
 
         return createFallbackAnalysisResponse(parsedText, industry);
@@ -167,12 +133,13 @@ public class GeminiService {
     // ===== 2. STAR METHOD BULLET REWRITE =====
 
     public Map<String, Object> generateStarRewrite(String resumeBullet, String jobDescription) {
+        logger.info("Feature: STAR_REWRITE | Target Model: {}", getEffectiveModel());
         String systemInstruction = SharedRecruiterInstructions.SYSTEM_INSTRUCTION;
         
         String prompt = "Resume Snippet: " + resumeBullet + "\n\n" +
                 "Job Context: " + jobDescription + "\n\n" +
                 "Rewrite this bullet using Google's X-Y-Z and STAR formula.\n" +
-                "STRICT INSTRUCTION: Return ONLY a raw JSON object with keys \"original\", \"optimized_bullet\", and \"reason\". Do not use markdown code block syntax.";
+                "STRICT INSTRUCTION: Return ONLY a raw JSON object with keys \"original\", \"optimized_bullet\", and \"reason\".";
 
         try {
             String raw = executeGeminiQuery(prompt, systemInstruction);
@@ -191,18 +158,20 @@ public class GeminiService {
         );
     }
 
-    // ===== BATCH STAR METHOD BULLET REWRITES (1 API CALL) =====
+    // ===== BATCH STAR METHOD BULLET REWRITES =====
 
     public List<Map<String, String>> generateBatchStarRewrites(List<String> bullets, String jobContext) {
         if (bullets == null || bullets.isEmpty()) {
             return Collections.emptyList();
         }
 
+        logger.info("Feature: BATCH_STAR_REWRITE | Count: {} | Target Model: {}", bullets.size(), getEffectiveModel());
+
         String systemInstruction = SharedRecruiterInstructions.SYSTEM_INSTRUCTION;
         StringBuilder promptBuilder = new StringBuilder();
         promptBuilder.append("Job Context: ").append(jobContext != null ? jobContext : "Target Role").append("\n\n");
         promptBuilder.append("Rewrite each of the following resume bullets using Google's X-Y-Z and STAR formula (Situation, Task, Action, Result).\n");
-        promptBuilder.append("STRICT INSTRUCTION: Return ONLY a raw JSON array of objects, where each object has keys \"original\" and \"improved\". Do not use markdown code block syntax.\n\n");
+        promptBuilder.append("STRICT INSTRUCTION: Return ONLY a raw JSON array of objects, where each object has keys \"original\" and \"improved\".\n\n");
         promptBuilder.append("Bullets to rewrite:\n");
         for (int i = 0; i < bullets.size(); i++) {
             promptBuilder.append(i + 1).append(". ").append(bullets.get(i)).append("\n");
@@ -228,31 +197,10 @@ public class GeminiService {
         return fallbackList;
     }
 
-    // ===== 3. SMART INTERVIEW FLASHCARDS =====
-
-    public List<Map<String, Object>> generateFlashcards(String jobDescription) {
-        String systemInstruction = SharedRecruiterInstructions.SYSTEM_INSTRUCTION;
-
-        String prompt = "Job Description: " + jobDescription + "\n\n" +
-                "Generate exactly 5 technical/behavioral interview questions.\n" +
-                "STRICT INSTRUCTION: Return ONLY a raw JSON array of 5 objects containing keys \"question\", \"difficulty\", \"recruiter_perspective\". Do not use markdown code block syntax.";
-
-        try {
-            String raw = executeGeminiQuery(prompt, systemInstruction);
-            String cleaned = extractJsonArray(raw);
-            if (cleaned != null) {
-                return objectMapper.readValue(cleaned, new TypeReference<List<Map<String, Object>>>() {});
-            }
-        } catch (Exception e) {
-            logger.error("Flashcard generation failed: {}", e.getMessage());
-        }
-
-        return Collections.emptyList();
-    }
-
-    // ===== 4. AI COVER LETTER GENERATOR =====
+    // ===== 3. AI COVER LETTER GENERATOR =====
 
     public Map<String, Object> generateCoverLetter(String parsedResume, String jobDescription) {
+        logger.info("Feature: COVER_LETTER | Target Model: {}", getEffectiveModel());
         String systemInstruction = SharedRecruiterInstructions.SYSTEM_INSTRUCTION;
         String prompt = CoverLetterPrompt.buildPrompt(parsedResume, jobDescription, "Target Company", "Target Role");
 
@@ -270,59 +218,10 @@ public class GeminiService {
         throw new RuntimeException("Failed to parse Gemini response for cover letter.");
     }
 
-    // ===== 5. COMPETITIVE RANK PREDICTOR =====
-
-    public Map<String, Object> predictCompetitiveRank(String parsedResume, String jobDescription) {
-        String systemInstruction = SharedRecruiterInstructions.SYSTEM_INSTRUCTION;
-
-        String prompt = "Simulate an applicant pool of 200 candidates competing for this role.\n" +
-                "Resume:\n" + parsedResume + "\n\n" +
-                "Job Description:\n" + jobDescription + "\n\n" +
-                "STRICT INSTRUCTION: Return ONLY a raw JSON object with keys \"estimated_percentile\", \"top_competitor_advantage\", \"quick_win_recommendation\".";
-
-        try {
-            String raw = executeGeminiQuery(prompt, systemInstruction);
-            String cleaned = extractJson(raw);
-            if (cleaned != null) {
-                return objectMapper.readValue(cleaned, new TypeReference<Map<String, Object>>() {});
-            }
-        } catch (Exception e) {
-            logger.error("Competitive rank prediction failed: {}", e.getMessage());
-            throw new RuntimeException("Competitive rank prediction failed: " + e.getMessage());
-        }
-
-        throw new RuntimeException("Failed to generate competitive rank prediction.");
-    }
-
-    // ===== 6. CHROME EXTENSION QUICK SCAN =====
-
-    public Map<String, Object> quickScan(String resumeText, String jobDescriptionText) {
-        String systemInstruction = SharedRecruiterInstructions.SYSTEM_INSTRUCTION;
-
-        String prompt = "Resume:\n" + resumeText + "\n\n" +
-                "Job Description:\n" + jobDescriptionText + "\n\n" +
-                "STRICT INSTRUCTION: Return ONLY a raw JSON object with keys \"matchPercentage\" and \"missingKeywords\".";
-
-        try {
-            String raw = executeGeminiQuery(prompt, systemInstruction);
-            String cleaned = extractJson(raw);
-            if (cleaned != null) {
-                return objectMapper.readValue(cleaned, new TypeReference<Map<String, Object>>() {});
-            }
-        } catch (Exception e) {
-            logger.error("Quick scan failed: {}", e.getMessage());
-        }
-
-        KeywordEngineService.KeywordAnalysisResult kwResult = keywordEngineService.analyzeResumeKeywords(resumeText, "SOFTWARE_ENGINEER");
-        return Map.of(
-            "matchPercentage", kwResult.getMatchPercentage(),
-            "missingKeywords", kwResult.getMissingKeywords()
-        );
-    }
-
-    // ===== 7. JOB MATCH X-RAY SCAN =====
+    // ===== 4. JOB MATCH X-RAY SCAN =====
 
     public Map<String, Object> analyzeJobMatch(String resumeText, String jobDescriptionText, String companyName, String roleTitle) {
+        logger.info("Feature: JOB_MATCH | Target Model: {}", getEffectiveModel());
         String systemInstruction = SharedRecruiterInstructions.SYSTEM_INSTRUCTION;
         String prompt = JobMatchPrompt.buildPrompt(resumeText, jobDescriptionText, companyName, roleTitle);
 
@@ -352,111 +251,204 @@ public class GeminiService {
         return realMap;
     }
 
-    // ===== CENTRALIZED ENGINE WITH RESPONSE_MIME_TYPE: APPLICATION/JSON =====
+    // ===== 5. RESUME CHAT =====
+
+    public Map<String, Object> chatWithResume(String resumeText, String userQuery) {
+        logger.info("Feature: RESUME_CHAT | Target Model: {}", getEffectiveModel());
+        String systemInstruction = SharedRecruiterInstructions.SYSTEM_INSTRUCTION;
+        String prompt = "CANDIDATE RESUME TEXT:\n" + resumeText + "\n\n" +
+                "USER QUESTION: " + userQuery + "\n\n" +
+                "Answer the user's question with technical accuracy based on the resume text.\n" +
+                "STRICT INSTRUCTION: Return ONLY a raw JSON object with keys \"answer\" and \"keyInsights\".";
+
+        try {
+            String raw = executeGeminiQuery(prompt, systemInstruction);
+            String cleaned = extractJson(raw);
+            if (cleaned != null) {
+                return objectMapper.readValue(cleaned, new TypeReference<Map<String, Object>>() {});
+            }
+        } catch (Exception e) {
+            logger.error("Resume Chat failed: {}", e.getMessage());
+        }
+
+        return Map.of(
+            "answer", "Answer evaluated against candidate resume content.",
+            "keyInsights", List.of("Resume review complete")
+        );
+    }
+
+    // ===== 6. COMPETITIVE RANK PREDICTOR =====
+
+    public Map<String, Object> predictCompetitiveRank(String parsedResume, String jobDescription) {
+        logger.info("Feature: COMPETITIVE_RANK | Target Model: {}", getEffectiveModel());
+        String systemInstruction = SharedRecruiterInstructions.SYSTEM_INSTRUCTION;
+
+        String prompt = "Simulate an applicant pool of 200 candidates competing for this role.\n" +
+                "Resume:\n" + parsedResume + "\n\n" +
+                "Job Description:\n" + jobDescription + "\n\n" +
+                "STRICT INSTRUCTION: Return ONLY a raw JSON object with keys \"estimated_percentile\", \"top_competitor_advantage\", \"quick_win_recommendation\".";
+
+        try {
+            String raw = executeGeminiQuery(prompt, systemInstruction);
+            String cleaned = extractJson(raw);
+            if (cleaned != null) {
+                return objectMapper.readValue(cleaned, new TypeReference<Map<String, Object>>() {});
+            }
+        } catch (Exception e) {
+            logger.error("Competitive rank prediction failed: {}", e.getMessage());
+            throw new RuntimeException("Competitive rank prediction failed: " + e.getMessage());
+        }
+
+        throw new RuntimeException("Failed to generate competitive rank prediction.");
+    }
+
+    // ===== 7. CHROME EXTENSION QUICK SCAN =====
+
+    public Map<String, Object> quickScan(String resumeText, String jobDescriptionText) {
+        logger.info("Feature: EXTENSION_QUICK_SCAN | Target Model: {}", getEffectiveModel());
+        String systemInstruction = SharedRecruiterInstructions.SYSTEM_INSTRUCTION;
+
+        String prompt = "Resume:\n" + resumeText + "\n\n" +
+                "Job Description:\n" + jobDescriptionText + "\n\n" +
+                "STRICT INSTRUCTION: Return ONLY a raw JSON object with keys \"matchPercentage\" and \"missingKeywords\".";
+
+        try {
+            String raw = executeGeminiQuery(prompt, systemInstruction);
+            String cleaned = extractJson(raw);
+            if (cleaned != null) {
+                return objectMapper.readValue(cleaned, new TypeReference<Map<String, Object>>() {});
+            }
+        } catch (Exception e) {
+            logger.error("Quick scan failed: {}", e.getMessage());
+        }
+
+        KeywordEngineService.KeywordAnalysisResult kwResult = keywordEngineService.analyzeResumeKeywords(resumeText, "SOFTWARE_ENGINEER");
+        return Map.of(
+            "matchPercentage", kwResult.getMatchPercentage(),
+            "missingKeywords", kwResult.getMissingKeywords()
+        );
+    }
+
+    // ===== CENTRALIZED GEMINI REST ENGINE (EXCLUSIVELY USES gemini-3.1-flash-lite) =====
 
     public String executeGeminiQuery(String prompt, String systemInstruction) {
         if (apiKey == null || apiKey.trim().isEmpty()) {
-            throw new GeminiAuthException("Gemini API Key is missing.");
+            logger.error("Gemini Request Failed: API Key missing.");
+            throw new GeminiAuthException("Gemini API Key is missing. Please set GEMINI_API_KEY environment variable.");
         }
 
-        List<String> modelsToTry = new ArrayList<>();
-        if (configuredModel != null && !configuredModel.isBlank()) {
-            modelsToTry.add(configuredModel);
-        }
-        for (String fallback : List.of("gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-2.0-flash-lite")) {
-            if (!modelsToTry.contains(fallback)) {
-                modelsToTry.add(fallback);
+        String targetModel = getEffectiveModel();
+        String apiVer = "v1beta";
+        String url = "https://generativelanguage.googleapis.com/" + apiVer + "/models/" + targetModel + ":generateContent?key=" + apiKey;
+
+        int maxAttempts = 2; // Initial attempt + 1 retry for transient 5xx or timeout
+        long startTime = System.currentTimeMillis();
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            logger.info("Executing Gemini API Call | Model: {} | Attempt: {}/{} | Endpoint: {}", targetModel, attempt, maxAttempts, apiVer);
+
+            Map<String, Object> requestBody = new HashMap<>();
+            
+            if (systemInstruction != null && !systemInstruction.isBlank()) {
+                Map<String, Object> sysInst = new HashMap<>();
+                sysInst.put("parts", List.of(Map.of("text", systemInstruction)));
+                requestBody.put("system_instruction", sysInst);
             }
-        }
 
-        List<String> apiVersions = List.of("v1beta", "v1");
-        String lastError = "ERROR_EMPTY_RESPONSE";
+            Map<String, Object> contents = new HashMap<>();
+            contents.put("parts", List.of(Map.of("text", prompt)));
+            requestBody.put("contents", List.of(contents));
 
-        for (String currentModel : modelsToTry) {
-            for (String apiVer : apiVersions) {
-                String url = "https://generativelanguage.googleapis.com/" + apiVer + "/models/" + currentModel + ":generateContent?key=" + apiKey;
-                logger.info("Executing Gemini API request. Version: {}, Model: {}", apiVer, currentModel);
+            Map<String, Object> genConfig = new HashMap<>();
+            genConfig.put("response_mime_type", "application/json");
+            requestBody.put("generationConfig", genConfig);
 
-                Map<String, Object> requestBody = new HashMap<>();
+            List<Map<String, Object>> safetySettings = List.of(
+                Map.of("category", "HARM_CATEGORY_HARASSMENT", "threshold", "BLOCK_NONE"),
+                Map.of("category", "HARM_CATEGORY_HATE_SPEECH", "threshold", "BLOCK_NONE"),
+                Map.of("category", "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold", "BLOCK_NONE"),
+                Map.of("category", "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold", "BLOCK_NONE")
+            );
+            requestBody.put("safetySettings", safetySettings);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            try {
+                ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+                long responseTimeMs = System.currentTimeMillis() - startTime;
+                Map<String, Object> body = response.getBody();
+
+                if (body != null) {
+                    // Extract token usage metrics if returned by API
+                    String tokenMetrics = "";
+                    if (body.containsKey("usageMetadata")) {
+                        Map<String, Object> usage = (Map<String, Object>) body.get("usageMetadata");
+                        tokenMetrics = String.format("Tokens -> Prompt: %s, Candidates: %s, Total: %s",
+                                usage.get("promptTokenCount"), usage.get("candidatesTokenCount"), usage.get("totalTokenCount"));
+                    }
+
+                    if (body.containsKey("candidates")) {
+                        List<Map<String, Object>> candidates = (List<Map<String, Object>>) body.get("candidates");
+                        if (!candidates.isEmpty()) {
+                            Map<String, Object> firstCandidate = candidates.get(0);
+                            
+                            if (firstCandidate.containsKey("finishReason") && "SAFETY".equals(firstCandidate.get("finishReason"))) {
+                                logger.error("Gemini Error -> Model: {}, Error: SAFETY_BLOCKED, ResponseTime: {}ms", targetModel, responseTimeMs);
+                                throw new RuntimeException("Gemini response was blocked by safety filters.");
+                            }
+
+                            if (firstCandidate.containsKey("content")) {
+                                Map<String, Object> content = (Map<String, Object>) firstCandidate.get("content");
+                                List<Map<String, Object>> responseParts = (List<Map<String, Object>>) content.get("parts");
+                                if (responseParts != null && !responseParts.isEmpty()) {
+                                    logger.info("Gemini Request Succeeded | Model: {} | ResponseTime: {}ms | {}", targetModel, responseTimeMs, tokenMetrics);
+                                    return (String) responseParts.get(0).get("text");
+                                }
+                            }
+                        }
+                    }
+
+                    if (body.containsKey("error")) {
+                        Map<String, Object> error = (Map<String, Object>) body.get("error");
+                        String errorMsg = String.valueOf(error.get("message"));
+                        logger.error("Gemini Error -> Model: {}, Error: API_ERROR - {}, ResponseTime: {}ms", targetModel, errorMsg, responseTimeMs);
+                        throw new RuntimeException("Gemini API Error: " + errorMsg);
+                    }
+                }
+            } catch (HttpClientErrorException e) {
+                long responseTimeMs = System.currentTimeMillis() - startTime;
+                int statusCode = e.getStatusCode().value();
+
+                if (statusCode == 404) {
+                    logger.error("Gemini Error -> Model: {}, Error: 404_MODEL_NOT_FOUND (Unsupported Model), ResponseTime: {}ms", targetModel, responseTimeMs);
+                    throw new RuntimeException("Unsupported Gemini model (" + targetModel + "). Model not found (404).");
+                } else if (statusCode == 401) {
+                    logger.error("Gemini Error -> Model: {}, Error: 401_UNAUTHORIZED (Invalid API Key), ResponseTime: {}ms", targetModel, responseTimeMs);
+                    throw new GeminiAuthException("Invalid Gemini API Key (401).");
+                } else if (statusCode == 429) {
+                    logger.error("Gemini Error -> Model: {}, Error: 429_QUOTA_EXCEEDED (Rate Limit Exceeded), ResponseTime: {}ms", targetModel, responseTimeMs);
+                    throw new RuntimeException("Gemini API Quota Exceeded (429). Please check API quota or try again later.");
+                } else {
+                    logger.error("Gemini Error -> Model: {}, Error: HTTP_{} - {}, ResponseTime: {}ms", targetModel, statusCode, e.getMessage(), responseTimeMs);
+                    throw new RuntimeException("Gemini API HTTP Error " + statusCode + ": " + e.getMessage());
+                }
+            } catch (Exception e) {
+                long responseTimeMs = System.currentTimeMillis() - startTime;
+                logger.warn("Gemini Request Attempt {}/{} Failed -> Model: {}, Error: {}, ResponseTime: {}ms", attempt, maxAttempts, targetModel, e.getMessage(), responseTimeMs);
                 
-                if (systemInstruction != null) {
-                    Map<String, Object> sysInst = new HashMap<>();
-                    Map<String, Object> sysParts = new HashMap<>();
-                    sysParts.put("text", systemInstruction);
-                    sysInst.put("parts", List.of(sysParts));
-                    requestBody.put("system_instruction", sysInst);
+                if (attempt < maxAttempts) {
+                    try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                    continue; // Retry ONCE for transient 5xx or network errors
                 }
-
-                Map<String, Object> contents = new HashMap<>();
-                Map<String, Object> parts = new HashMap<>();
-                parts.put("text", prompt);
-                contents.put("parts", List.of(parts));
-                requestBody.put("contents", List.of(contents));
-
-                // Force Gemini REST API to return application/json
-                Map<String, Object> genConfig = new HashMap<>();
-                genConfig.put("response_mime_type", "application/json");
-                requestBody.put("generationConfig", genConfig);
-
-                List<Map<String, Object>> safetySettings = List.of(
-                    Map.of("category", "HARM_CATEGORY_HARASSMENT", "threshold", "BLOCK_NONE"),
-                    Map.of("category", "HARM_CATEGORY_HATE_SPEECH", "threshold", "BLOCK_NONE"),
-                    Map.of("category", "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold", "BLOCK_NONE"),
-                    Map.of("category", "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold", "BLOCK_NONE")
-                );
-                requestBody.put("safetySettings", safetySettings);
-
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_JSON);
-
-                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-
-                try {
-                    ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
-                    Map<String, Object> body = response.getBody();
-                    if (body != null) {
-                        if (body.containsKey("candidates")) {
-                            List<Map<String, Object>> candidates = (List<Map<String, Object>>) body.get("candidates");
-                            if (!candidates.isEmpty()) {
-                                Map<String, Object> firstCandidate = candidates.get(0);
-                                
-                                if (firstCandidate.containsKey("finishReason") && "SAFETY".equals(firstCandidate.get("finishReason"))) {
-                                   logger.error("Gemini response was blocked by safety filters on model {}.", currentModel);
-                                   return "ERROR_SAFETY_BLOCKED";
-                                }
-
-                                if (firstCandidate.containsKey("content")) {
-                                    Map<String, Object> content = (Map<String, Object>) firstCandidate.get("content");
-                                    List<Map<String, Object>> responseParts = (List<Map<String, Object>>) content.get("parts");
-                                    if (responseParts != null && !responseParts.isEmpty()) {
-                                        logger.info("Gemini API call succeeded using version: {}, model: {}", apiVer, currentModel);
-                                        return (String) responseParts.get(0).get("text");
-                                    }
-                                }
-                            }
-                        }
-                        if (body.containsKey("error")) {
-                            Map<String, Object> error = (Map<String, Object>) body.get("error");
-                            String errorMsg = String.valueOf(error.get("message"));
-                            logger.warn("Gemini API version {} model {} returned error: {}", apiVer, currentModel, errorMsg);
-                            lastError = "ERROR_API_" + errorMsg;
-                            if (errorMsg.contains("NOT_FOUND") || errorMsg.contains("404") || errorMsg.contains("not found")) {
-                                continue;
-                            }
-                            return lastError;
-                        }
-                    }
-                } catch (Exception e) {
-                    logger.warn("Gemini API call failed for version {} model {}: {}", apiVer, currentModel, e.getMessage());
-                    lastError = "ERROR_EXCEPTION_" + e.getMessage();
-                    if (e.getMessage() != null && (e.getMessage().contains("404") || e.getMessage().contains("NOT_FOUND") || e.getMessage().contains("not found"))) {
-                        continue;
-                    }
-                }
+                
+                logger.error("Gemini Request Final Failure -> Model: {}, Error: {}, ResponseTime: {}ms", targetModel, e.getMessage(), responseTimeMs);
+                throw new RuntimeException("Gemini API call failed: " + e.getMessage());
             }
         }
 
-        return lastError;
+        throw new RuntimeException("Gemini API call failed after retries.");
     }
 
     public String extractJson(String raw) {

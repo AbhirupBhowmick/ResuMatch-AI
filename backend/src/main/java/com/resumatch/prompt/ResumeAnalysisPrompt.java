@@ -7,48 +7,45 @@ public class ResumeAnalysisPrompt {
 
     public static String buildPrompt(String resumeText, String targetIndustry, String experienceLevel) {
         return """
-            STRICT FORMAT MANDATE: You MUST return ONLY a single, raw, valid JSON object starting with '{' and ending with '}'. Do NOT echo the prompt. Do NOT write introductory words, industry names, notes, or markdown fences (```json).
-            
-            Evaluate the resume text provided below for the target industry of "%s" at experience level "%s".
-            
-            Required Output JSON Schema:
+            Evaluate resume text for target industry "%s" at experience level "%s".
+            Return ONLY raw JSON matching schema:
             {
               "overallScore": 88,
               "atsScore": 86,
               "roleMatch": 90,
-              "executiveSummary": "A concise 3-4 sentence high-level executive summary of candidate readiness",
-              "firstImpression": "Immediate 6-second recruiter reaction when viewing this resume top to bottom",
-              "strengths": ["at least 5 specific, evidence-backed strengths present in the resume"],
-              "weaknesses": ["at least 4 specific weaknesses, missing metrics, or formatting gaps"],
-              "missingKeywords": ["at least 6 critical industry keywords missing from the text"],
+              "executiveSummary": "Concise high-level executive summary of candidate readiness",
+              "firstImpression": "6-second recruiter reaction when viewing resume",
+              "strengths": ["specific evidence-backed strengths"],
+              "weaknesses": ["specific weaknesses, missing metrics, or formatting gaps"],
+              "missingKeywords": ["critical industry keywords missing"],
               "matchedKeywords": ["keywords found in resume"],
               "recommendedKeywords": ["suggested keywords for target industry"],
               "technicalSkills": ["hard skills identified"],
               "softSkills": ["demonstrated soft skills"],
-              "projectsFeedback": ["constructive feedback on project section"],
-              "experienceFeedback": ["constructive feedback on work experience bullet points"],
-              "educationFeedback": ["constructive feedback on education"],
+              "projectsFeedback": ["feedback on projects"],
+              "experienceFeedback": ["feedback on work experience bullets"],
+              "educationFeedback": ["feedback on education"],
               "certificationFeedback": ["feedback on certifications"],
               "formattingFeedback": ["ATS parsing vulnerabilities or layout issues"],
-              "grammarFeedback": ["spelling, active vs passive voice, or grammar issues"],
-              "recruiterComments": "Direct feedback from a Senior Recruiter point of view",
-              "technicalInterviewerComments": "Feedback from a Lead Systems Architect / Interviewer",
+              "grammarFeedback": ["spelling or active vs passive voice issues"],
+              "recruiterComments": "Senior recruiter perspective",
+              "technicalInterviewerComments": "Interviewer perspective",
               "hiringRecommendation": "Strong Hire",
               "interviewProbability": 85,
               "salaryReadiness": "$140,000 - $165,000",
-              "priorityFixes": ["5 immediate high-impact fixes to raise ATS score"],
+              "priorityFixes": ["5 immediate high-impact fixes"],
               "beforeAfterExamples": [
                 {
-                  "currentText": "exact weak bullet from candidate resume",
+                  "currentText": "exact weak bullet",
                   "improvedText": "rewritten bullet applying Google X-Y-Z and STAR formula with metrics",
-                  "reason": "explanation of why the rewrite is stronger for ATS and recruiters",
+                  "reason": "why rewrite is stronger for ATS",
                   "category": "Impact Metrics"
                 }
               ],
               "thirtyDayPlan": {
-                "immediateFixes": ["1-3 high priority actions for today"],
-                "oneWeekPlan": ["action steps for week 1"],
-                "twoWeekPlan": ["action steps for week 2"],
+                "immediateFixes": ["immediate actions"],
+                "oneWeekPlan": ["week 1 action steps"],
+                "twoWeekPlan": ["week 2 action steps"],
                 "thirtyDayPlan": ["30-day target goals"],
                 "expectedAtsImprovement": "+15-25 Points"
               },
