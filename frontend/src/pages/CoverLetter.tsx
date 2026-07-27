@@ -25,8 +25,8 @@ export default function CoverLetter() {
   const [copied, setCopied] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const userName = localStorage.getItem("user_name") || "Professional User";
-  const userEmail = localStorage.getItem("user_email") || "user@resumatch.ai";
+  const userName = localStorage.getItem("user_name") || "";
+  const userEmail = localStorage.getItem("user_email") || "";
 
   const handleGenerate = async () => {
     if (!jobDescription.trim() || jobDescription.trim().length < 15) {

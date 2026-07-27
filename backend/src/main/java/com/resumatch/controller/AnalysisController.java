@@ -107,6 +107,22 @@ public class AnalysisController {
     }
 
     /**
+     * Get complete analysis history for current user from PostgreSQL database.
+     */
+    @GetMapping("/history")
+    public ResponseEntity<?> getHistory() {
+        var history = analysisService.getUserAnalysisHistory();
+        var list = history.stream().map(a -> Map.of(
+                "id", a.getId(),
+                "score", a.getScore(),
+                "status", a.getStatus().name(),
+                "createdAt", a.getCreatedAt().toString(),
+                "improvedSummary", a.getImprovedSummary() != null ? a.getImprovedSummary() : ""
+        )).toList();
+        return ResponseEntity.ok(list);
+    }
+
+    /**
      * Export analysis result as a professional PDF report.
      */
     @GetMapping("/export/{id}")

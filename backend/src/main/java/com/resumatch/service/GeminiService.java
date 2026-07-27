@@ -40,6 +40,9 @@ public class GeminiService {
         this.keywordEngineService = keywordEngineService;
     }
 
+    private volatile List<String> cachedSupportedModels = null;
+    private volatile long lastModelFetchTime = 0;
+
     @PostConstruct
     public void init() {
         if (apiKey == null || apiKey.trim().isEmpty()) {
@@ -53,6 +56,10 @@ public class GeminiService {
     public List<String> fetchSupportedModels() {
         if (apiKey == null || apiKey.trim().isEmpty()) {
             return Collections.emptyList();
+        }
+        long now = System.currentTimeMillis();
+        if (cachedSupportedModels != null && (now - lastModelFetchTime < 3600000)) { // Cache for 1 hour
+            return cachedSupportedModels;
         }
         String listUrl = "https://generativelanguage.googleapis.com/v1beta/models?key=" + apiKey;
         try {
@@ -72,6 +79,8 @@ public class GeminiService {
                     }
                 }
                 logger.info("Google ModelService ListModels returned supported generateContent models: {}", validModels);
+                cachedSupportedModels = validModels;
+                lastModelFetchTime = now;
                 return validModels;
             }
         } catch (Exception e) {
@@ -84,8 +93,7 @@ public class GeminiService {
 
     public ResumeAnalysisResponse analyzeResume(String parsedText, String industry, String experienceLevel) {
         if (parsedText == null || parsedText.trim().isEmpty()) {
-            logger.warn("Parsed text is empty, using placeholder for analysis.");
-            parsedText = "Extracted text was empty. Please check the PDF/DOCX file.";
+            throw new IllegalArgumentException("Resume text is empty. Please upload a valid PDF or DOCX file.");
         }
 
         logger.info("Analyzing resume for industry: {}. Experience: {}. Text length: {}", industry, experienceLevel, parsedText.length());
@@ -117,7 +125,7 @@ public class GeminiService {
                     return response;
                 }
             }
-            logger.warn("Raw Gemini AI response was not parsable JSON. Creating fallback structured response.");
+            logger.warn("Raw Gemini AI response was not parsable JSON. Creating fallback structured response based on Keyword Engine.");
         } catch (Exception e) {
             logger.error("Error parsing Gemini API JSON response: {}", e.getMessage());
         }
@@ -127,29 +135,29 @@ public class GeminiService {
 
     private ResumeAnalysisResponse createFallbackAnalysisResponse(String parsedText, String industry) {
         KeywordEngineService.KeywordAnalysisResult kwResult = keywordEngineService.analyzeResumeKeywords(parsedText, industry);
-        int score = Math.max(kwResult.getMatchPercentage(), 78);
+        int score = kwResult.getMatchPercentage();
 
         ResumeAnalysisResponse fallback = ResumeAnalysisResponse.builder()
                 .overallScore(score)
                 .atsScore(score)
                 .roleMatch(score)
-                .executiveSummary("Candidate resume evaluated for " + (industry != null ? industry : "Software Engineering") + ". Core technical competencies detected.")
-                .firstImpression("Technical skills present, but impact metrics and STAR bullet formatting can be strengthened.")
-                .strengths(kwResult.getMatchedKeywords().isEmpty() ? List.of("Relevant Industry Focus", "Technical Skillset Listed", "Clear Section Structure") : kwResult.getMatchedKeywords())
-                .weaknesses(List.of("Bullet points require STAR method impact metrics", "Missing keyword optimizations for target role"))
+                .executiveSummary("Resume keyword alignment audit completed for " + (industry != null ? industry : "target role") + ".")
+                .firstImpression("Keyword audit completed based on resume text.")
+                .strengths(kwResult.getMatchedKeywords())
+                .weaknesses(kwResult.getMissingKeywords().isEmpty() ? List.of() : List.of("Missing industry keywords: " + String.join(", ", kwResult.getMissingKeywords())))
                 .missingKeywords(kwResult.getMissingKeywords())
                 .matchedKeywords(kwResult.getMatchedKeywords())
                 .recommendedKeywords(kwResult.getRecommendedKeywords())
                 .technicalSkills(kwResult.getMatchedKeywords())
-                .softSkills(List.of("Problem Solving", "Team Collaboration"))
-                .priorityFixes(List.of("Quantify project impact with percentage metrics", "Incorporate missing keywords into work experience bullets"))
-                .hiringRecommendation("Hire")
-                .interviewProbability(80)
+                .softSkills(List.of())
+                .priorityFixes(kwResult.getMissingKeywords().isEmpty() ? List.of() : List.of("Incorporate missing keywords into experience bullets"))
+                .hiringRecommendation(score >= 70 ? "Hire" : "Review")
+                .interviewProbability(score)
                 .salaryReadiness("Market Competitive")
                 .extractedText(parsedText)
                 .score(score)
-                .improvedSummary("Results-driven software professional with demonstrated experience in " + (industry != null ? industry : "engineering") + ".")
-                .jobSuggestions(List.of("Software Engineer", "Systems Developer"))
+                .improvedSummary("Resume analyzed based on keyword match score.")
+                .jobSuggestions(List.of(industry != null ? industry : "Software Engineering"))
                 .build();
 
         fallback.syncLegacyFields();
@@ -178,9 +186,46 @@ public class GeminiService {
 
         return Map.of(
             "original", resumeBullet != null ? resumeBullet : "",
-            "optimized_bullet", "Spearheaded core system optimizations, improving performance by 35% and enhancing reliability.",
-            "reason", "Applied STAR method with quantifiable impact metrics."
+            "optimized_bullet", resumeBullet != null ? resumeBullet : "",
+            "reason", "Could not transform bullet point via AI service."
         );
+    }
+
+    // ===== BATCH STAR METHOD BULLET REWRITES (1 API CALL) =====
+
+    public List<Map<String, String>> generateBatchStarRewrites(List<String> bullets, String jobContext) {
+        if (bullets == null || bullets.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String systemInstruction = SharedRecruiterInstructions.SYSTEM_INSTRUCTION;
+        StringBuilder promptBuilder = new StringBuilder();
+        promptBuilder.append("Job Context: ").append(jobContext != null ? jobContext : "Target Role").append("\n\n");
+        promptBuilder.append("Rewrite each of the following resume bullets using Google's X-Y-Z and STAR formula (Situation, Task, Action, Result).\n");
+        promptBuilder.append("STRICT INSTRUCTION: Return ONLY a raw JSON array of objects, where each object has keys \"original\" and \"improved\". Do not use markdown code block syntax.\n\n");
+        promptBuilder.append("Bullets to rewrite:\n");
+        for (int i = 0; i < bullets.size(); i++) {
+            promptBuilder.append(i + 1).append(". ").append(bullets.get(i)).append("\n");
+        }
+
+        try {
+            String raw = executeGeminiQuery(promptBuilder.toString(), systemInstruction);
+            String cleaned = extractJsonArray(raw);
+            if (cleaned != null) {
+                List<Map<String, String>> results = objectMapper.readValue(cleaned, new TypeReference<List<Map<String, String>>>() {});
+                if (results != null && !results.isEmpty()) {
+                    return results;
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Batch STAR rewrite failed: {}", e.getMessage());
+        }
+
+        List<Map<String, String>> fallbackList = new ArrayList<>();
+        for (String bullet : bullets) {
+            fallbackList.add(Map.of("original", bullet, "improved", bullet));
+        }
+        return fallbackList;
     }
 
     // ===== 3. SMART INTERVIEW FLASHCARDS =====
@@ -202,10 +247,7 @@ public class GeminiService {
             logger.error("Flashcard generation failed: {}", e.getMessage());
         }
 
-        return List.of(
-            Map.of("question", "How do you handle production incidents under tight SLAs?", "difficulty", "Hard", "recruiter_perspective", "Assesses composure and incident management process."),
-            Map.of("question", "Describe your experience optimizing database queries.", "difficulty", "Medium", "recruiter_perspective", "Tests technical depth in backend data structures.")
-        );
+        return Collections.emptyList();
     }
 
     // ===== 4. AI COVER LETTER GENERATOR =====
@@ -222,19 +264,10 @@ public class GeminiService {
             }
         } catch (Exception e) {
             logger.error("Cover letter generation failed: {}", e.getMessage());
+            throw new RuntimeException("Cover letter generation failed: " + e.getMessage());
         }
 
-        return Map.of(
-            "recipient", "Hiring Manager",
-            "companyName", "Target Company",
-            "targetRole", "Target Role",
-            "salutation", "Dear Hiring Manager,",
-            "openingParagraph", "I am writing to express my strong enthusiasm for the Target Role position.",
-            "bodyParagraph1", "With a solid background in software engineering, I have delivered high-impact applications.",
-            "bodyParagraph2", "My technical expertise aligns directly with the core requirements of your engineering team.",
-            "closingParagraph", "Thank you for your time and consideration. I look forward to discussing how I can add value.",
-            "fullCoverLetter", "Dear Hiring Manager,\n\nI am writing to express my strong enthusiasm for the position. My background aligns directly with your team's goals.\n\nBest regards,"
-        );
+        throw new RuntimeException("Failed to parse Gemini response for cover letter.");
     }
 
     // ===== 5. COMPETITIVE RANK PREDICTOR =====
@@ -255,13 +288,10 @@ public class GeminiService {
             }
         } catch (Exception e) {
             logger.error("Competitive rank prediction failed: {}", e.getMessage());
+            throw new RuntimeException("Competitive rank prediction failed: " + e.getMessage());
         }
 
-        return Map.of(
-            "estimated_percentile", 85,
-            "top_competitor_advantage", "Candidates with explicit cloud architecture certifications",
-            "quick_win_recommendation", "Incorporate metrics and STAR bullet structure into work history"
-        );
+        throw new RuntimeException("Failed to generate competitive rank prediction.");
     }
 
     // ===== 6. CHROME EXTENSION QUICK SCAN =====
@@ -285,7 +315,7 @@ public class GeminiService {
 
         KeywordEngineService.KeywordAnalysisResult kwResult = keywordEngineService.analyzeResumeKeywords(resumeText, "SOFTWARE_ENGINEER");
         return Map.of(
-            "matchPercentage", Math.max(kwResult.getMatchPercentage(), 75),
+            "matchPercentage", kwResult.getMatchPercentage(),
             "missingKeywords", kwResult.getMissingKeywords()
         );
     }
@@ -307,19 +337,19 @@ public class GeminiService {
         }
 
         KeywordEngineService.KeywordAnalysisResult kwResult = keywordEngineService.analyzeResumeKeywords(resumeText, "SOFTWARE_ENGINEER");
-        Map<String, Object> fallbackMap = new HashMap<>();
-        fallbackMap.put("overallMatchScore", Math.max(kwResult.getMatchPercentage(), 84));
-        fallbackMap.put("atsMatchScore", Math.max(kwResult.getMatchPercentage(), 82));
-        fallbackMap.put("skillMatchScore", 85);
-        fallbackMap.put("experienceMatchScore", 80);
-        fallbackMap.put("educationMatchScore", 90);
-        fallbackMap.put("keywordMatchScore", kwResult.getMatchPercentage());
-        fallbackMap.put("matchReasoning", "Resume exhibits strong technical alignment with role requirements.");
-        fallbackMap.put("matchedSkills", kwResult.getMatchedKeywords());
-        fallbackMap.put("missingSkills", kwResult.getMissingKeywords());
-        fallbackMap.put("missingKeywords", kwResult.getMissingKeywords());
-        fallbackMap.put("expectedAtsIncrease", "+15-20 Points");
-        return fallbackMap;
+        Map<String, Object> realMap = new HashMap<>();
+        realMap.put("overallMatchScore", kwResult.getMatchPercentage());
+        realMap.put("atsMatchScore", kwResult.getMatchPercentage());
+        realMap.put("skillMatchScore", kwResult.getMatchPercentage());
+        realMap.put("experienceMatchScore", kwResult.getMatchPercentage());
+        realMap.put("educationMatchScore", kwResult.getMatchPercentage());
+        realMap.put("keywordMatchScore", kwResult.getMatchPercentage());
+        realMap.put("matchReasoning", "Keyword analysis evaluated against job description requirements.");
+        realMap.put("matchedSkills", kwResult.getMatchedKeywords());
+        realMap.put("missingSkills", kwResult.getMissingKeywords());
+        realMap.put("missingKeywords", kwResult.getMissingKeywords());
+        realMap.put("expectedAtsIncrease", "+10 Points");
+        return realMap;
     }
 
     // ===== CENTRALIZED ENGINE WITH RESPONSE_MIME_TYPE: APPLICATION/JSON =====
@@ -329,16 +359,9 @@ public class GeminiService {
             throw new GeminiAuthException("Gemini API Key is missing.");
         }
 
-        List<String> discoveredModels = fetchSupportedModels();
         List<String> modelsToTry = new ArrayList<>();
-        
         if (configuredModel != null && !configuredModel.isBlank()) {
             modelsToTry.add(configuredModel);
-        }
-        for (String discovered : discoveredModels) {
-            if (!modelsToTry.contains(discovered)) {
-                modelsToTry.add(discovered);
-            }
         }
         for (String fallback : List.of("gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-2.0-flash-lite")) {
             if (!modelsToTry.contains(fallback)) {

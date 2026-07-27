@@ -65,40 +65,31 @@ public class AnalysisService {
         // Backup the original content before overwriting
         analysis.setBackupContent(analysis.getOriginalResumeText());
 
-        // Generate STAR rewrites for weak bullet points using Gemini
-        List<Map<String, String>> comparisons = new ArrayList<>();
-
-        // Sample original bullets extracted from the resume
+        // Generate STAR rewrites for weak bullet points using Gemini in a single batch call
         List<String> originalBullets = extractBulletPoints(analysis.getOriginalResumeText());
 
         String jobTitle = "Target Role";
         try {
             List<String> suggestions = objectMapper.readValue(
                     analysis.getJobSuggestions(), new TypeReference<List<String>>() {});
-            if (!suggestions.isEmpty()) jobTitle = suggestions.get(0);
+            if (suggestions != null && !suggestions.isEmpty()) jobTitle = suggestions.get(0);
         } catch (Exception e) {
             log.warn("Could not parse job suggestions: {}", e.getMessage());
         }
 
-        for (String bullet : originalBullets) {
-            try {
-                Map<String, Object> starResult = geminiService.generateStarRewrite(bullet, "Job Title: " + jobTitle);
-                String improved = (String) starResult.getOrDefault("optimized_bullet",
-                        starResult.getOrDefault("star_rewrite", bullet));
-
-                ImprovedResume section = ImprovedResume.builder()
-                        .analysisResult(analysis)
-                        .sectionName("Experience Bullet")
-                        .originalText(bullet)
-                        .aiImprovedText(improved)
-                        .build();
-                improvedResumeRepository.save(section);
-
-                comparisons.add(Map.of("original", bullet, "improved", improved));
-            } catch (Exception e) {
-                log.error("STAR rewrite failed for bullet: {}", e.getMessage());
-                comparisons.add(Map.of("original", bullet, "improved", bullet));
-            }
+        List<Map<String, String>> comparisons = geminiService.generateBatchStarRewrites(originalBullets, "Job Title: " + jobTitle);
+        
+        for (Map<String, String> comp : comparisons) {
+            String orig = comp.getOrDefault("original", "");
+            String imp = comp.getOrDefault("improved", orig);
+            
+            ImprovedResume section = ImprovedResume.builder()
+                    .analysisResult(analysis)
+                    .sectionName("Experience Bullet")
+                    .originalText(orig)
+                    .aiImprovedText(imp)
+                    .build();
+            improvedResumeRepository.save(section);
         }
 
         // Save the improved summary
@@ -196,6 +187,11 @@ public class AnalysisService {
     public Optional<AnalysisResult> getAnalysisById(Long id) {
         User user = userService.getCurrentUser();
         return analysisResultRepository.findByIdAndUser(id, user);
+    }
+
+    public List<AnalysisResult> getUserAnalysisHistory() {
+        User user = userService.getCurrentUser();
+        return analysisResultRepository.findByUserOrderByCreatedAtDesc(user);
     }
 
     // ── Helpers ──

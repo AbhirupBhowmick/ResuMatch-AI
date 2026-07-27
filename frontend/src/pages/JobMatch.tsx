@@ -36,7 +36,12 @@ export default function JobMatch() {
       if (resumeFile) {
         formData.append("file", resumeFile);
       } else {
-        const storedText = localStorage.getItem("extractedText") || "Candidate resume placeholder text";
+        const storedText = localStorage.getItem("extractedText");
+        if (!storedText || !storedText.trim()) {
+          setErrorStatus("Please upload a resume file first before running Job Match.");
+          setScanStatus('idle');
+          return;
+        }
         const blob = new Blob([storedText], { type: "text/plain" });
         formData.append("file", blob, "Resume.txt");
       }
@@ -213,17 +218,22 @@ export default function JobMatch() {
                 <div className="p-5 rounded-lg bg-zinc-900/40 border border-zinc-800/60 space-y-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Match Score</span>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-extrabold text-white">{results.matchScore || results.score || 82}%</span>
+                    <span className="text-4xl font-extrabold text-white">
+                      {results.overallMatchScore ?? results.matchScore ?? results.score ?? 0}%
+                    </span>
                   </div>
                   <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
-                    <div className="bg-indigo-500 h-full rounded-full" style={{ width: `${results.matchScore || results.score || 82}%` }} />
+                    <div 
+                      className="bg-indigo-500 h-full rounded-full" 
+                      style={{ width: `${results.overallMatchScore ?? results.matchScore ?? results.score ?? 0}%` }} 
+                    />
                   </div>
                 </div>
 
                 <div className="p-5 rounded-lg bg-zinc-900/40 border border-zinc-800/60 md:col-span-2 space-y-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Alignment Summary</span>
                   <p className="text-xs text-zinc-300 leading-relaxed">
-                    {results.summary || results.matchSummary || "Resume shows solid alignment with target requirements. Incorporate missing technical keywords to maximize ATS screening score."}
+                    {results.matchReasoning || results.summary || results.matchSummary || "Job description keyword evaluation complete."}
                   </p>
                 </div>
               </div>
@@ -235,13 +245,17 @@ export default function JobMatch() {
                     <AlertTriangle className="w-4 h-4" />
                     <span>Missing Job Keywords</span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {(results.missingKeywords || ["Kubernetes", "GraphQL", "System Architecture"]).map((kw: string, i: number) => (
-                      <span key={i} className="px-2.5 py-1 rounded bg-amber-500/10 text-amber-300 text-xs border border-amber-500/20 font-mono">
-                        {kw}
-                      </span>
-                    ))}
-                  </div>
+                  {results.missingKeywords && results.missingKeywords.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {results.missingKeywords.map((kw: string, i: number) => (
+                        <span key={i} className="px-2.5 py-1 rounded bg-amber-500/10 text-amber-300 text-xs border border-amber-500/20 font-mono">
+                          {kw}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-zinc-500 pt-1">No missing keywords identified.</p>
+                  )}
                 </div>
 
                 <div className="p-5 rounded-lg bg-zinc-900/40 border border-zinc-800/60 space-y-3">
@@ -249,13 +263,17 @@ export default function JobMatch() {
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Matched Skill Keywords</span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {(results.matchedKeywords || ["React", "TypeScript", "Spring Boot", "REST APIs"]).map((kw: string, i: number) => (
-                      <span key={i} className="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-300 text-xs border border-emerald-500/20 font-mono">
-                        {kw}
-                      </span>
-                    ))}
-                  </div>
+                  {(results.matchedKeywords || results.matchedSkills) && (results.matchedKeywords || results.matchedSkills).length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {(results.matchedKeywords || results.matchedSkills).map((kw: string, i: number) => (
+                        <span key={i} className="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-300 text-xs border border-emerald-500/20 font-mono">
+                          {kw}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-zinc-500 pt-1">No matched keywords found.</p>
+                  )}
                 </div>
               </div>
 

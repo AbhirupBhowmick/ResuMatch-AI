@@ -39,10 +39,16 @@ export default function Dashboard() {
     localStorage.setItem("dashboard_view", activeTab);
   }, [activeTab]);
 
+  const [dbHistory, setDbHistory] = useState<any[]>([]);
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         await axios.get("/api/v1/auth/me");
+        const historyRes = await axios.get("/api/v1/analysis/history");
+        if (Array.isArray(historyRes.data)) {
+          setDbHistory(historyRes.data);
+        }
       } catch (err) {
         console.error("Failed to sync user context", err);
       }
@@ -68,11 +74,11 @@ export default function Dashboard() {
       localStorage.setItem("extractedText", response.data.extractedText || "");
       
       const newHistoryItem: HistoryItem = { 
-        id: Date.now(), 
+        id: response.data.analysisId || Date.now(), 
         name: selectedFile.name, 
         role: response.data.role || "Software Engineering",
         date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), 
-        score: response.data.overallScore || response.data.score || 85
+        score: response.data.overallScore ?? response.data.score
       };
       const existingHistory: HistoryItem[] = JSON.parse(localStorage.getItem("resumeHistory") || "[]");
       localStorage.setItem("resumeHistory", JSON.stringify([newHistoryItem, ...existingHistory]));
@@ -101,8 +107,17 @@ export default function Dashboard() {
     }
   };
 
-  // Real data only from localStorage / state
-  const history: HistoryItem[] = JSON.parse(localStorage.getItem("resumeHistory") || "[]");
+  // Real data from PostgreSQL dbHistory or localStorage fallback
+  const localHistory: HistoryItem[] = JSON.parse(localStorage.getItem("resumeHistory") || "[]");
+  const history: HistoryItem[] = dbHistory.length > 0
+    ? dbHistory.map((item: any) => ({
+        id: item.id,
+        name: `Resume Audit #${item.id}`,
+        role: "Software Engineering",
+        date: item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Recently",
+        score: item.score
+      }))
+    : localHistory;
   const latestAnalysis = JSON.parse(localStorage.getItem("analysisResult") || "null");
 
   return (
@@ -250,7 +265,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-xs">
-                      {latestAnalysis.overallScore || latestAnalysis.score || 85}
+                      {latestAnalysis.overallScore ?? latestAnalysis.score ?? 0}
                     </div>
                     <div>
                       <h3 className="text-xs font-semibold text-white">Latest ATS Audit</h3>

@@ -10,14 +10,12 @@ export default function Header({ title }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [profilePic, setProfilePic] = useState<string | null>(localStorage.getItem("user_profile_pic"));
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: "Resume analysis complete", time: "Just now", read: false },
-  ]);
+  const [notifications, setNotifications] = useState<{ id: number; text: string; time: string; read: boolean }[]>([]);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const userName = localStorage.getItem("user_name") || "Professional User";
-  const userEmail = localStorage.getItem("user_email") || "user@resumatch.ai";
-  const userInitial = userName.charAt(0).toUpperCase();
+  const userName = localStorage.getItem("user_name") || "User";
+  const userEmail = localStorage.getItem("user_email") || "";
+  const userInitial = userName ? userName.charAt(0).toUpperCase() : "U";
   const navigate = useNavigate();
 
   const handleProfilePicUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,12 +73,18 @@ export default function Header({ title }: HeaderProps) {
                 </button>
               </div>
               <div className="max-h-60 overflow-y-auto divide-y divide-zinc-800/60">
-                {notifications.map(n => (
-                  <div key={n.id} className={`p-3 transition-colors ${!n.read ? 'bg-indigo-500/5' : ''}`}>
-                    <p className="text-zinc-300">{n.text}</p>
-                    <p className="text-[10px] text-zinc-500 mt-1">{n.time}</p>
+                {notifications.length > 0 ? (
+                  notifications.map(n => (
+                    <div key={n.id} className={`p-3 transition-colors ${!n.read ? 'bg-indigo-500/5' : ''}`}>
+                      <p className="text-zinc-300">{n.text}</p>
+                      <p className="text-[10px] text-zinc-500 mt-1">{n.time}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-zinc-500 text-xs">
+                    No new notifications
                   </div>
-                ))}
+                )}
               </div>
             </div>
           )}

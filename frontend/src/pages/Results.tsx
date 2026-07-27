@@ -152,13 +152,13 @@ export default function Results() {
                 <div className="p-5 rounded-lg bg-zinc-900/40 border border-zinc-800/60 flex flex-col justify-between space-y-4">
                   <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">ATS Overall Score</span>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-extrabold text-white">{analysisData.overallScore || analysisData.score || 85}</span>
+                    <span className="text-4xl font-extrabold text-white">{analysisData.overallScore ?? analysisData.score ?? 0}</span>
                     <span className="text-xs text-zinc-400">/ 100</span>
                   </div>
                   <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
                     <div 
                       className="bg-indigo-500 h-full rounded-full transition-all duration-500" 
-                      style={{ width: `${analysisData.overallScore || analysisData.score || 85}%` }} 
+                      style={{ width: `${analysisData.overallScore ?? analysisData.score ?? 0}%` }} 
                     />
                   </div>
                 </div>
@@ -168,10 +168,10 @@ export default function Results() {
                   <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Recruiter Screening Verdict</span>
                   <div className="flex items-center gap-2">
                     <UserCheck className="w-5 h-5 text-indigo-400" />
-                    <span className="text-base font-semibold text-white">{analysisData.hiringRecommendation || "Strong Contender"}</span>
+                    <span className="text-base font-semibold text-white">{analysisData.hiringRecommendation || "Audit Completed"}</span>
                   </div>
                   <p className="text-xs text-zinc-400 leading-relaxed">
-                    {analysisData.recruiterComments || analysisData.firstImpression || "Resume passes initial ATS criteria for engineering evaluation."}
+                    {analysisData.recruiterComments || analysisData.firstImpression || "Keyword alignment and section audit details listed below."}
                   </p>
                 </div>
 
