@@ -31,9 +31,9 @@ export default function Login() {
   const handleGoogleAuth = async () => {
     setGoogleLoading(true);
     setErrorMsg("");
-    const rawUrl = import.meta.env.VITE_API_URL || 'https://resumatch-api-fjh5bfbwh5bthxbs.eastasia-01.azurewebsites.net';
-    const envUrl = (rawUrl.trim() === '' || rawUrl.includes('railway.app') || rawUrl.includes('onrender.com')) 
-      ? 'https://resumatch-api-fjh5bfbwh5bthxbs.eastasia-01.azurewebsites.net' 
+    const rawUrl = import.meta.env.VITE_API_URL || 'https://resumatchai-eedkfucdc4echgdn.koreacentral-01.azurewebsites.net';
+    const envUrl = (rawUrl.trim() === '' || rawUrl.includes('railway.app') || rawUrl.includes('onrender.com') || rawUrl.includes('eastasia-01')) 
+      ? 'https://resumatchai-eedkfucdc4echgdn.koreacentral-01.azurewebsites.net' 
       : rawUrl;
     const formattedUrl = envUrl.startsWith('http') ? envUrl : `https://${envUrl}`;
     const baseUrl = formattedUrl.replace(/\/+$/, '');
