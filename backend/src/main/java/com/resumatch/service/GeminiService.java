@@ -37,6 +37,9 @@ public class GeminiService {
     @Value("${gemini.api.key:}")
     private String apiKey;
 
+    @Value("${gemini.api.base-url:https://generativelanguage.googleapis.com}")
+    private String baseUrl;
+
     public GeminiService(KeywordEngineService keywordEngineService) {
         this.keywordEngineService = keywordEngineService;
     }
@@ -286,7 +289,8 @@ public class GeminiService {
 
         String targetModel = getEffectiveModel();
         String apiVer = "v1beta";
-        String url = "https://generativelanguage.googleapis.com/" + apiVer + "/models/" + targetModel + ":generateContent?key=" + apiKey;
+        String cleanBaseUrl = (baseUrl != null && !baseUrl.isBlank()) ? baseUrl.replaceAll("/+$", "") : "https://generativelanguage.googleapis.com";
+        String url = cleanBaseUrl + "/" + apiVer + "/models/" + targetModel + ":generateContent?key=" + apiKey;
 
         int maxAttempts = 2; // Initial attempt + 1 retry for transient 5xx or timeout
         long startTime = System.currentTimeMillis();
