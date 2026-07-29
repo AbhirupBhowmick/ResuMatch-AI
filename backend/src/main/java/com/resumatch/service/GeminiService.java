@@ -31,7 +31,7 @@ public class GeminiService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final KeywordEngineService keywordEngineService;
 
-    @Value("${gemini.model:${GEMINI_MODEL:gemini-3.1-flash-lite}}")
+    @Value("${gemini.model:${GEMINI_MODEL:gemini-2.5-flash}}")
     private String configuredModel;
 
     @Value("${gemini.api.key:}")
@@ -53,7 +53,7 @@ public class GeminiService {
     }
 
     private String getEffectiveModel() {
-        return (configuredModel != null && !configuredModel.isBlank()) ? configuredModel : "gemini-3.1-flash-lite";
+        return (configuredModel != null && !configuredModel.isBlank()) ? configuredModel : "gemini-2.5-flash";
     }
 
     // ===== 1. RECRUITER-GRADE RESUME ANALYSIS =====
@@ -94,40 +94,10 @@ public class GeminiService {
             }
         } catch (Exception e) {
             logger.error("Resume Analysis AI failed: {}", e.getMessage());
+            throw new RuntimeException("Resume Analysis AI failed: " + e.getMessage(), e);
         }
 
-        return createFallbackAnalysisResponse(parsedText, industry);
-    }
-
-    private ResumeAnalysisResponse createFallbackAnalysisResponse(String parsedText, String industry) {
-        KeywordEngineService.KeywordAnalysisResult kwResult = keywordEngineService.analyzeResumeKeywords(parsedText, industry);
-        int score = kwResult.getMatchPercentage();
-
-        ResumeAnalysisResponse fallback = ResumeAnalysisResponse.builder()
-                .overallScore(score)
-                .atsScore(score)
-                .roleMatch(score)
-                .executiveSummary("Resume keyword alignment audit completed for " + (industry != null ? industry : "target role") + ".")
-                .firstImpression("Keyword audit completed based on resume text.")
-                .strengths(kwResult.getMatchedKeywords())
-                .weaknesses(kwResult.getMissingKeywords().isEmpty() ? List.of() : List.of("Missing industry keywords: " + String.join(", ", kwResult.getMissingKeywords())))
-                .missingKeywords(kwResult.getMissingKeywords())
-                .matchedKeywords(kwResult.getMatchedKeywords())
-                .recommendedKeywords(kwResult.getRecommendedKeywords())
-                .technicalSkills(kwResult.getMatchedKeywords())
-                .softSkills(List.of())
-                .priorityFixes(kwResult.getMissingKeywords().isEmpty() ? List.of() : List.of("Incorporate missing keywords into experience bullets"))
-                .hiringRecommendation(score >= 70 ? "Hire" : "Review")
-                .interviewProbability(score)
-                .salaryReadiness("Market Competitive")
-                .extractedText(parsedText)
-                .score(score)
-                .improvedSummary("Resume analyzed based on keyword match score.")
-                .jobSuggestions(List.of(industry != null ? industry : "Software Engineering"))
-                .build();
-
-        fallback.syncLegacyFields();
-        return fallback;
+        throw new RuntimeException("Failed to generate AI resume analysis from Gemini response.");
     }
 
     // ===== 2. STAR METHOD BULLET REWRITE =====
@@ -149,13 +119,10 @@ public class GeminiService {
             }
         } catch (Exception e) {
             logger.error("STAR rewrite failed: {}", e.getMessage());
+            throw new RuntimeException("STAR Rewrite AI failed: " + e.getMessage(), e);
         }
 
-        return Map.of(
-            "original", resumeBullet != null ? resumeBullet : "",
-            "optimized_bullet", resumeBullet != null ? resumeBullet : "",
-            "reason", "Could not transform bullet point via AI service."
-        );
+        throw new RuntimeException("Failed to parse Gemini response for STAR rewrite.");
     }
 
     // ===== BATCH STAR METHOD BULLET REWRITES =====
@@ -188,13 +155,10 @@ public class GeminiService {
             }
         } catch (Exception e) {
             logger.error("Batch STAR rewrite failed: {}", e.getMessage());
+            throw new RuntimeException("Batch STAR Rewrite AI failed: " + e.getMessage(), e);
         }
 
-        List<Map<String, String>> fallbackList = new ArrayList<>();
-        for (String bullet : bullets) {
-            fallbackList.add(Map.of("original", bullet, "improved", bullet));
-        }
-        return fallbackList;
+        throw new RuntimeException("Failed to generate batch STAR rewrites from Gemini response.");
     }
 
     // ===== 3. AI COVER LETTER GENERATOR =====
@@ -233,22 +197,10 @@ public class GeminiService {
             }
         } catch (Exception e) {
             logger.error("Job Match scan failed: {}", e.getMessage());
+            throw new RuntimeException("Job Match AI failed: " + e.getMessage(), e);
         }
 
-        KeywordEngineService.KeywordAnalysisResult kwResult = keywordEngineService.analyzeResumeKeywords(resumeText, "SOFTWARE_ENGINEER");
-        Map<String, Object> realMap = new HashMap<>();
-        realMap.put("overallMatchScore", kwResult.getMatchPercentage());
-        realMap.put("atsMatchScore", kwResult.getMatchPercentage());
-        realMap.put("skillMatchScore", kwResult.getMatchPercentage());
-        realMap.put("experienceMatchScore", kwResult.getMatchPercentage());
-        realMap.put("educationMatchScore", kwResult.getMatchPercentage());
-        realMap.put("keywordMatchScore", kwResult.getMatchPercentage());
-        realMap.put("matchReasoning", "Keyword analysis evaluated against job description requirements.");
-        realMap.put("matchedSkills", kwResult.getMatchedKeywords());
-        realMap.put("missingSkills", kwResult.getMissingKeywords());
-        realMap.put("missingKeywords", kwResult.getMissingKeywords());
-        realMap.put("expectedAtsIncrease", "+10 Points");
-        return realMap;
+        throw new RuntimeException("Failed to parse Gemini response for Job Match scan.");
     }
 
     // ===== 5. RESUME CHAT =====
@@ -269,12 +221,10 @@ public class GeminiService {
             }
         } catch (Exception e) {
             logger.error("Resume Chat failed: {}", e.getMessage());
+            throw new RuntimeException("Resume Chat AI failed: " + e.getMessage(), e);
         }
 
-        return Map.of(
-            "answer", "Answer evaluated against candidate resume content.",
-            "keyInsights", List.of("Resume review complete")
-        );
+        throw new RuntimeException("Failed to parse Gemini response for Resume Chat.");
     }
 
     // ===== 6. COMPETITIVE RANK PREDICTOR =====
@@ -320,13 +270,10 @@ public class GeminiService {
             }
         } catch (Exception e) {
             logger.error("Quick scan failed: {}", e.getMessage());
+            throw new RuntimeException("Quick scan AI failed: " + e.getMessage(), e);
         }
 
-        KeywordEngineService.KeywordAnalysisResult kwResult = keywordEngineService.analyzeResumeKeywords(resumeText, "SOFTWARE_ENGINEER");
-        return Map.of(
-            "matchPercentage", kwResult.getMatchPercentage(),
-            "missingKeywords", kwResult.getMissingKeywords()
-        );
+        throw new RuntimeException("Failed to parse Gemini response for Quick Scan.");
     }
 
     // ===== CENTRALIZED GEMINI REST ENGINE (EXCLUSIVELY USES gemini-3.1-flash-lite) =====
