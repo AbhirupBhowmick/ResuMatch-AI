@@ -8,4 +8,5 @@ build/
 *.trace.db
 artifacts/
 dummy.txt
-backend/src/main/resources/application.yml
+*.jar
+*.zip

@@ -99,7 +99,7 @@ public class ResumeController {
             }
 
             Optional<AnalysisResult> latest = analysisService.getLatestAnalysis();
-            String resumeText = latest.map(AnalysisResult::getExtractedText).orElse(null);
+            String resumeText = latest.map(AnalysisResult::getOriginalResumeText).orElse(null);
             if (resumeText == null || resumeText.isBlank()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "No analyzed resume found. Please upload a resume first."));
             }

@@ -5,9 +5,9 @@ import './index.css'
 import App from './App.tsx'
 
 // Standardize Axios for the entire application
-const rawUrl = import.meta.env.VITE_API_URL || 'https://resumatch-ai-74wq.onrender.com';
-const envUrl = (rawUrl.trim() === '' || rawUrl.includes('railway.app')) 
-  ? 'https://resumatch-ai-74wq.onrender.com' 
+const rawUrl = import.meta.env.VITE_API_URL || 'https://resumatch-api-fjh5bfbwh5bthxbs.eastasia-01.azurewebsites.net';
+const envUrl = (rawUrl.trim() === '' || rawUrl.includes('railway.app') || rawUrl.includes('onrender.com')) 
+  ? 'https://resumatch-api-fjh5bfbwh5bthxbs.eastasia-01.azurewebsites.net' 
   : rawUrl;
 const formattedUrl = envUrl.startsWith('http') ? envUrl : `https://${envUrl}`;
 axios.defaults.baseURL = formattedUrl.replace(/\/+$/, '');
