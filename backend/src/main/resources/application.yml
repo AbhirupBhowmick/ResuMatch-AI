@@ -43,7 +43,7 @@ jwt:
 
 # AI Integration
 gemini:
-  model: ${GEMINI_MODEL:gemini-2.5-flash}
+  model: ${GEMINI_MODEL:gemini-3.6-flash}
   api:
     key: ${GEMINI_API_KEY:}
 

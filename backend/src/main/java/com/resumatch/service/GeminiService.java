@@ -31,7 +31,7 @@ public class GeminiService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final KeywordEngineService keywordEngineService;
 
-    @Value("${gemini.model:${GEMINI_MODEL:gemini-2.5-flash}}")
+    @Value("${gemini.model:${GEMINI_MODEL:gemini-3.6-flash}}")
     private String configuredModel;
 
     @Value("${gemini.api.key:}")
@@ -53,7 +53,7 @@ public class GeminiService {
     }
 
     private String getEffectiveModel() {
-        return (configuredModel != null && !configuredModel.isBlank()) ? configuredModel : "gemini-2.5-flash";
+        return (configuredModel != null && !configuredModel.isBlank()) ? configuredModel : "gemini-3.6-flash";
     }
 
     // ===== 1. RECRUITER-GRADE RESUME ANALYSIS =====
